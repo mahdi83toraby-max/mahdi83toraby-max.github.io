@@ -1705,3 +1705,98 @@ a:hover { text-decoration: underline; }
 @keyframes heroSweep { 0%, 55%, 100% { transform: translateX(110%); } 72% { transform: translateX(-110%); } }
 @keyframes gradientFlow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+
+/* ========================================================================
+   SGM Motion Lab — ambient motion and richer micro-interactions
+   ======================================================================== */
+[data-theme="dark"] body::after {
+    content: "";
+    position: fixed;
+    width: 34vw;
+    height: 34vw;
+    min-width: 260px;
+    min-height: 260px;
+    max-width: 540px;
+    max-height: 540px;
+    inset-inline-end: -12vw;
+    top: 20vh;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: -1;
+    opacity: .18;
+    background: radial-gradient(circle at 35% 35%, rgba(170, 121, 255, .42), transparent 64%);
+    filter: blur(18px);
+    animation: ambientFloat 16s ease-in-out infinite alternate;
+}
+[data-theme="dark"] .app::before {
+    content: "";
+    position: fixed;
+    width: 22vw;
+    height: 22vw;
+    min-width: 180px;
+    min-height: 180px;
+    max-width: 360px;
+    max-height: 360px;
+    inset-inline-start: -9vw;
+    top: 58vh;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: -1;
+    opacity: .13;
+    background: radial-gradient(circle, rgba(87, 217, 184, .48), transparent 68%);
+    filter: blur(18px);
+    animation: ambientFloat 20s ease-in-out -6s infinite alternate-reverse;
+}
+[data-theme="dark"] .hero-chips .hchip {
+    animation: chipBreathe 5s ease-in-out infinite;
+}
+[data-theme="dark"] .hero-chips .hchip:nth-child(2) { animation-delay: -1.6s; }
+[data-theme="dark"] .hero-chips .hchip:nth-child(3) { animation-delay: -3.2s; }
+[data-theme="dark"] .fin-card.balance {
+    overflow: hidden;
+}
+[data-theme="dark"] .fin-card.balance::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 22%, rgba(255,255,255,.16) 48%, transparent 73%);
+    transform: translateX(120%);
+    animation: balanceShine 8s ease-in-out infinite;
+}
+[data-theme="dark"] .sec-ico {
+    box-shadow: 0 0 0 0 rgba(121, 167, 255, .26);
+    animation: iconPulse 4.5s ease-in-out infinite;
+}
+[data-theme="dark"] .card:nth-child(2) .sec-ico { animation-delay: -1.2s; }
+[data-theme="dark"] .card:nth-child(3) .sec-ico { animation-delay: -2.4s; }
+[data-theme="dark"] .qa {
+    position: relative;
+    overflow: hidden;
+}
+[data-theme="dark"] .qa::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(115deg, transparent 25%, rgba(255,255,255,.10) 50%, transparent 75%);
+    transform: translateX(130%);
+    transition: transform .5s ease;
+}
+[data-theme="dark"] .qa:hover::after { transform: translateX(-130%); }
+[data-theme="dark"] .tl-dot { animation: dotPulse 2.8s ease-in-out infinite; }
+[data-theme="dark"] .tl-item:nth-child(2) .tl-dot { animation-delay: -.8s; }
+[data-theme="dark"] .tl-item:nth-child(3) .tl-dot { animation-delay: -1.6s; }
+[data-theme="dark"] .modal { box-shadow: 0 30px 100px rgba(0,0,0,.62), 0 0 0 1px rgba(121,167,255,.16); }
+@keyframes ambientFloat { 0% { transform: translate3d(-5%, -4%, 0) scale(.92); } 100% { transform: translate3d(7%, 8%, 0) scale(1.10); } }
+@keyframes chipBreathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes balanceShine { 0%, 52%, 100% { transform: translateX(120%); } 68% { transform: translateX(-120%); } }
+@keyframes iconPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(121,167,255,0); } 50% { box-shadow: 0 0 0 7px rgba(121,167,255,.07); } }
+@keyframes dotPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(121,167,255,.22); } 50% { transform: scale(1.25); box-shadow: 0 0 0 6px rgba(121,167,255,0); } }
+@media (max-width: 767px) {
+    [data-theme="dark"] body::after { opacity: .12; }
+    [data-theme="dark"] .app::before { opacity: .08; }
+}
+@media (prefers-reduced-motion: reduce) {
+    [data-theme="dark"] body::after, [data-theme="dark"] .app::before { animation: none; }
+}
