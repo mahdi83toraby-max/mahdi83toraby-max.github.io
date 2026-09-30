@@ -3,42 +3,67 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1b6ec2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="SGM Dashboard — مرکز فرمان شخصی برای مدیریت روزانه" />
     <title>داشبورد SGM</title>
     <base href="/" />
-    <link href="_framework/dotnet.ljj8fq8cqb.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-D1TL+giVrT3kl3zAr5rpIxFZkCwPaX8JsOMxgZOZzUY=" />
-    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="preload" href="fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/Vazirmatn-Black.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <script type="importmap">{
   "imports": {
     "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.958z1vx7fr.js",
-    "./_framework/dotnet.js": "./_framework/dotnet.ljj8fq8cqb.js",
     "./_framework/dotnet.native.js": "./_framework/dotnet.native.puryxhmhq9.js",
-    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.web2r9gqbh.js"
+    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.web2r9gqbh.js",
+    "./_framework/dotnet.js": "./_framework/dotnet.v3w6cer9bg.js"
   },
   "scopes": {},
   "integrity": {
     "./_framework/blazor.webassembly.958z1vx7fr.js": "sha256-A59Tr9HqEhHMu8kU7kruLI9ayw5MRS6Lvc6z7jCbghk=",
     "./_framework/blazor.webassembly.js": "sha256-A59Tr9HqEhHMu8kU7kruLI9ayw5MRS6Lvc6z7jCbghk=",
-    "./_framework/dotnet.js": "sha256-D1TL+giVrT3kl3zAr5rpIxFZkCwPaX8JsOMxgZOZzUY=",
-    "./_framework/dotnet.ljj8fq8cqb.js": "sha256-D1TL+giVrT3kl3zAr5rpIxFZkCwPaX8JsOMxgZOZzUY=",
+    "./_framework/dotnet.js": "sha256-C1wv9kDeooZkWF9iyASsKdAZylHzvni8VZg1RpET9aA=",
     "./_framework/dotnet.native.js": "sha256-gQbHHzCnWx8iDOC65EKbql7bEltJkfao7lmkAbIRajw=",
     "./_framework/dotnet.native.puryxhmhq9.js": "sha256-gQbHHzCnWx8iDOC65EKbql7bEltJkfao7lmkAbIRajw=",
     "./_framework/dotnet.runtime.js": "sha256-SOUHEQ3FhDAibBSR2u90NWZpoBjPuWRmH0BAATUlhJU=",
-    "./_framework/dotnet.runtime.web2r9gqbh.js": "sha256-SOUHEQ3FhDAibBSR2u90NWZpoBjPuWRmH0BAATUlhJU="
+    "./_framework/dotnet.runtime.web2r9gqbh.js": "sha256-SOUHEQ3FhDAibBSR2u90NWZpoBjPuWRmH0BAATUlhJU=",
+    "./_framework/dotnet.v3w6cer9bg.js": "sha256-C1wv9kDeooZkWF9iyASsKdAZylHzvni8VZg1RpET9aA="
   }
 }</script>
+    <script>
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem("sgm-theme"); } catch (e) { }
+            if (t !== "dark" && t !== "light") t = "light";
+            document.documentElement.setAttribute("data-theme", t);
+            window.sgm = {
+                getTheme: function () { return document.documentElement.getAttribute("data-theme") || "light"; },
+                setTheme: function (v) {
+                    document.documentElement.setAttribute("data-theme", v);
+                    try { localStorage.setItem("sgm-theme", v); } catch (e) { }
+                    var m = document.querySelector('meta[name="theme-color"]');
+                    if (m) m.setAttribute("content", v === "dark" ? "#10141b" : "#ffffff");
+                },
+                focusEl: function (el) { try { if (el && el.focus) el.focus(); } catch (e) { } }
+            };
+        })();
+    </script>
 </head>
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="boot">
+            <div class="boot-mark">S</div>
+            <div class="boot-title">SGM</div>
+            <div class="boot-sub">در حال آماده‌سازی داشبورد…</div>
+            <svg class="loading-progress">
+                <circle r="40%" cx="50%" cy="50%" />
+                <circle r="40%" cx="50%" cy="50%" />
+            </svg>
+            <div class="loading-progress-text"></div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
