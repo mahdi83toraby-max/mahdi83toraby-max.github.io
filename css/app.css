@@ -1642,3 +1642,66 @@ a:hover { text-decoration: underline; }
 .loading-progress circle:last-child { stroke: var(--brand); stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * .8), 500%; transition: stroke-dasharray .05s ease-in-out; }
 .loading-progress-text { position: absolute; text-align: center; font-weight: 700; color: var(--muted); font-size: .8rem; inset: calc(46vh + 3.6rem) 0 auto .2rem; }
 .loading-progress-text:after { content: var(--blazor-load-percentage-text, "در حال بارگذاری…"); }
+
+/* ========================================================================
+   SGM Aurora — premium dark dashboard layer
+   ======================================================================== */
+[data-theme="dark"] {
+    --bg: #070a11;
+    --surface: rgba(17, 24, 39, .88);
+    --surface-2: rgba(25, 34, 52, .84);
+    --surface-3: #202d43;
+    --border: rgba(148, 163, 184, .16);
+    --border-strong: rgba(148, 163, 184, .30);
+    --text: #f5f8ff;
+    --text-2: #c8d3e5;
+    --muted: #93a1b7;
+    --brand: #79a7ff;
+    --brand-2: #a789ff;
+    --brand-text: #b1c8ff;
+    --brand-soft: rgba(121, 167, 255, .16);
+    --brand-grad: linear-gradient(135deg, #5c8fff 0%, #8a70ff 52%, #c16fff 100%);
+    --shadow-card: 0 18px 46px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .055);
+    --shadow-pop: 0 28px 78px rgba(0, 0, 0, .52), 0 0 0 1px rgba(121, 167, 255, .18);
+    --shadow-brand: 0 15px 40px rgba(92, 143, 255, .30);
+}
+[data-theme="dark"] html, [data-theme="dark"] body {
+    background-color: var(--bg);
+    background-image: radial-gradient(900px 480px at 92% -12%, rgba(92, 143, 255, .19), transparent 62%), radial-gradient(760px 480px at -12% 28%, rgba(167, 137, 255, .15), transparent 62%), linear-gradient(180deg, #0a0f1b 0%, #070a11 100%);
+}
+[data-theme="dark"] body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: -1; opacity: .16;
+    background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 44px 44px; mask-image: linear-gradient(to bottom, black, transparent 78%);
+}
+[data-theme="dark"] .topbar {
+    background: linear-gradient(115deg, rgba(21, 30, 48, .88), rgba(11, 16, 27, .76));
+    border-color: rgba(145, 170, 224, .22); box-shadow: 0 16px 42px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.075);
+}
+[data-theme="dark"] .brand-mark { box-shadow: 0 0 0 5px rgba(121,167,255,.08), 0 14px 34px rgba(92,143,255,.44); animation: brandPulse 4s ease-in-out infinite; }
+[data-theme="dark"] .hero {
+    background: linear-gradient(135deg, rgba(24, 34, 55, .96), rgba(13, 19, 31, .90));
+    border-color: rgba(137, 164, 224, .24); box-shadow: 0 26px 74px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.07);
+}
+[data-theme="dark"] .hero::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 15%, rgba(255,255,255,.055) 48%, transparent 72%);
+    transform: translateX(110%); animation: heroSweep 9s ease-in-out infinite;
+}
+[data-theme="dark"] .card, [data-theme="dark"] .fin-card {
+    background: linear-gradient(145deg, rgba(20, 29, 45, .93), rgba(13, 19, 30, .89));
+    border-color: rgba(145, 170, 224, .16);
+}
+[data-theme="dark"] .card.hoverable:hover, [data-theme="dark"] .fin-card:hover { border-color: rgba(121, 167, 255, .44); transform: translateY(-5px) scale(1.006); }
+[data-theme="dark"] .btn-primary { background-size: 180% 180%; animation: gradientFlow 7s ease infinite; }
+[data-theme="dark"] .hchip, [data-theme="dark"] .badge-month, [data-theme="dark"] .topbar-date { box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
+[data-theme="dark"] .tl-item, [data-theme="dark"] .tx-row, [data-theme="dark"] .row.line, [data-theme="dark"] .account-row, [data-theme="dark"] .budget-row { transition: background .22s ease, border-color .22s ease, transform .22s ease; }
+[data-theme="dark"] .tl-item:hover, [data-theme="dark"] .tx-row:hover, [data-theme="dark"] .row.line:hover, [data-theme="dark"] .account-row:hover, [data-theme="dark"] .budget-row:hover { background: rgba(121, 167, 255, .075); border-color: rgba(121, 167, 255, .24); transform: translateX(-3px); }
+.app > * { animation: dashboardIn .55s cubic-bezier(.2,.7,.2,1) both; }
+.app > *:nth-child(2) { animation-delay: .05s; } .app > *:nth-child(3) { animation-delay: .10s; } .app > *:nth-child(4) { animation-delay: .15s; } .app > *:nth-child(5) { animation-delay: .20s; } .app > *:nth-child(6) { animation-delay: .25s; }
+.card, .fin-card { animation: cardIn .55s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes dashboardIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes cardIn { from { opacity: 0; transform: translateY(12px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes brandPulse { 0%, 100% { filter: saturate(1); } 50% { filter: saturate(1.35) brightness(1.10); } }
+@keyframes heroSweep { 0%, 55%, 100% { transform: translateX(110%); } 72% { transform: translateX(-110%); } }
+@keyframes gradientFlow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
