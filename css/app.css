@@ -1942,3 +1942,17 @@ button, .qa { overflow: hidden; }
         box-shadow: none !important;
     }
 }
+
+.task-reason {
+    color: var(--muted);
+    font-size: .72rem;
+    line-height: 1.6;
+}
+.task-reason-btn {
+    flex: 0 0 auto;
+    margin-inline-start: 8px;
+    white-space: nowrap;
+}
+@media (max-width: 767px) {
+    .task-reason-btn { font-size: .7rem; padding: 5px 8px; }
+}
