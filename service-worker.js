@@ -1,4 +1,4 @@
-const CACHE_NAME = "sgm-dashboard-v1";
+const CACHE_NAME = "sgm-dashboard-v2";
 const APP_SHELL = [
   "/",
   "/index.html",
