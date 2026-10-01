@@ -157,6 +157,11 @@
     window.sgmInitParticles = initParticles;
 
     function installObservers() {
+        var touchMode = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ||
+            (window.matchMedia && window.matchMedia("(max-width: 767px)").matches);
+        // The app itself remains fully functional; skip this enhancement layer
+        // on phones so it cannot compete with Blazor and touch scrolling.
+        if (touchMode) return;
         var progress = document.createElement("div");
         progress.className = "scroll-progress";
         progress.setAttribute("aria-hidden", "true");

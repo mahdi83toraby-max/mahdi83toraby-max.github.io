@@ -1896,3 +1896,26 @@ button, .qa { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
     .particle-canvas { display: none !important; }
 }
+
+
+/* SGM phone no-motion mode — the data UI must always win over decoration. */
+@media (max-width: 767px), (pointer: coarse) {
+    *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
+    [data-theme="dark"] body::before,
+    [data-theme="dark"] body::after,
+    [data-theme="dark"] .app::before,
+    [data-theme="dark"] .app::after,
+    .particle-canvas,
+    .cursor-glow,
+    .scroll-progress,
+    .click-ripple { display: none !important; }
+    .card.is-tilting, .fin-card.is-tilting, .hero.is-tilting,
+    .reveal-on-scroll, .reveal-on-scroll.is-visible {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
