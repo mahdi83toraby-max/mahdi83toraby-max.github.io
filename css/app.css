@@ -951,6 +951,73 @@ a:hover { text-decoration: underline; }
     flex: none;
 }
 
+/* ---------------- علت انجام‌نشدن ---------------- */
+.tl-reason {
+    color: var(--warn);
+    background: var(--warn-soft);
+    border-color: var(--warn);
+    max-width: 240px;
+}
+
+.tl-ndr {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity .18s ease, background .18s ease, color .18s ease;
+}
+.tl-item:hover .tl-ndr,
+.tl-item:focus-within .tl-ndr,
+.tl-ndr:focus-visible { opacity: 1; }
+@media (hover: none) { .tl-ndr { opacity: .8; } }
+
+.ndr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+    /* فهرست خودش اسکرول می‌شود تا بخش «افزودن علت» و دکمهٔ ثبت
+       همیشه در دید بمانند، حتی با تعداد زیاد گزینه‌ها. */
+    max-height: min(46vh, 380px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-inline-end: 2px;
+}
+
+.ndr-opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 9px 11px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    cursor: pointer;
+    transition: border-color .16s ease, background .16s ease;
+}
+.ndr-opt:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.ndr-opt.on { border-color: var(--warn); background: var(--warn-soft); }
+.ndr-opt input {
+    margin-top: 3px;
+    accent-color: var(--warn);
+    flex: none;
+}
+.ndr-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ndr-txt b { font-size: .88rem; font-weight: 700; color: var(--text); }
+.ndr-txt small { font-size: .76rem; color: var(--muted); line-height: 1.7; }
+.ndr-opt.on .ndr-txt b { color: var(--warn); }
+
+.ndr-add {
+    border-top: 1px dashed var(--border);
+    padding-top: 12px;
+}
+.ndr-add .inline-form { margin-top: 8px; }
+.ndr-add .inline-form .input { min-width: 0; }
+.ndr-add .inline-form .btn { flex: none; }
+
 .day-label {
     font-size: .78rem;
     font-weight: 800;
