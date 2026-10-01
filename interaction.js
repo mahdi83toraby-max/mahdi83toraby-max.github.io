@@ -73,6 +73,71 @@
         }, { passive: true });
     }
 
+    function initParticles() {
+        var canvas = document.createElement("canvas");
+        canvas.className = "particle-canvas";
+        canvas.setAttribute("aria-hidden", "true");
+        document.body.appendChild(canvas);
+        var ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        var particles = [];
+        var width = 0, height = 0, dpr = 1, lastScroll = window.scrollY, scrollKick = 0;
+        var maxCount = reduce ? 18 : (window.innerWidth < 700 ? 34 : 72);
+
+        function resize() {
+            dpr = Math.min(2, window.devicePixelRatio || 1);
+            width = window.innerWidth; height = window.innerHeight;
+            canvas.width = width * dpr; canvas.height = height * dpr;
+            canvas.style.width = width + "px"; canvas.style.height = height + "px";
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            if (particles.length === 0) {
+                for (var i = 0; i < maxCount; i++) particles.push({
+                    x: Math.random() * width, y: Math.random() * height,
+                    vx: (Math.random() - .5) * .22, vy: .10 + Math.random() * .34,
+                    r: 1 + Math.random() * 2.1, hue: 190 + Math.random() * 105,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+        }
+        function draw(time) {
+            ctx.clearRect(0, 0, width, height);
+            var pulse = time * .0006;
+            for (var i = 0; i < particles.length; i++) {
+                var p = particles[i];
+                if (!reduce) {
+                    var dx = p.x - pointer.x, dy = p.y - pointer.y;
+                    var distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                    if (distance < 150) {
+                        var force = (150 - distance) / 150 * .022;
+                        p.vx += dx / distance * force; p.vy += dy / distance * force;
+                    }
+                    p.vx += Math.sin(p.phase + pulse) * .0012;
+                    p.vy += scrollKick * .00045;
+                    p.vx *= .994; p.vy = Math.max(-.3, Math.min(.9, p.vy * .996));
+                    p.x += p.vx; p.y += p.vy;
+                }
+                if (p.x < -20) p.x = width + 20; if (p.x > width + 20) p.x = -20;
+                if (p.y < -20) p.y = height + 20; if (p.y > height + 20) p.y = -20;
+                var alpha = .27 + Math.sin(p.phase + pulse * 2) * .12;
+                ctx.beginPath(); ctx.fillStyle = "hsla(" + p.hue + ", 90%, 74%, " + alpha + ")";
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+                for (var j = i + 1; j < particles.length; j++) {
+                    var q = particles[j], lx = p.x - q.x, ly = p.y - q.y, dist = Math.sqrt(lx * lx + ly * ly);
+                    if (dist < 118) {
+                        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+                        ctx.strokeStyle = "hsla(" + ((p.hue + q.hue) / 2) + ", 80%, 72%, " + ((1 - dist / 118) * .14) + ")";
+                        ctx.lineWidth = .65; ctx.stroke();
+                    }
+                }
+            }
+            scrollKick *= .90;
+            if (!reduce) requestAnimationFrame(draw);
+        }
+        window.addEventListener("resize", resize, { passive: true });
+        window.addEventListener("scroll", function () { scrollKick = window.scrollY - lastScroll; lastScroll = window.scrollY; }, { passive: true });
+        resize(); draw(0);
+    }
+
     function installObservers() {
         var progress = document.createElement("div");
         progress.className = "scroll-progress";
@@ -82,6 +147,7 @@
         glow.className = "cursor-glow";
         glow.setAttribute("aria-hidden", "true");
         document.body.appendChild(glow);
+        initParticles();
         document.addEventListener("pointermove", function (event) { setPointer(event.clientX, event.clientY); }, { passive: true });
         document.addEventListener("click", addRipple, { passive: true });
         window.addEventListener("scroll", function () { if (!raf) raf = requestAnimationFrame(updateScroll); }, { passive: true });

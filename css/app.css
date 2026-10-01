@@ -1839,3 +1839,22 @@ button, .qa { overflow: hidden; }
     .reveal-on-scroll { opacity: 1; transform: none; transition: none; }
     .cursor-glow, .click-ripple { display: none; }
 }
+
+/* ========================================================================
+   SGM Particle Field — interactive constellation background
+   ======================================================================== */
+.particle-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    opacity: .78;
+    mix-blend-mode: screen;
+}
+.app { position: relative; z-index: 1; }
+.topbar, .hero, .card, .fin-card, .banner, .state-card, .modal-layer { position: relative; z-index: 2; }
+[data-theme="light"] .particle-canvas { opacity: .22; mix-blend-mode: multiply; }
+@media (max-width: 767px) { .particle-canvas { opacity: .48; } }
+@media (prefers-reduced-motion: reduce) { .particle-canvas { opacity: .18; } }
