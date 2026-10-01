@@ -74,6 +74,7 @@
     }
 
     function initParticles() {
+        if (document.querySelector("canvas.particle-canvas")) return;
         var canvas = document.createElement("canvas");
         canvas.className = "particle-canvas";
         canvas.setAttribute("aria-hidden", "true");
@@ -82,10 +83,13 @@
         if (!ctx) return;
         var particles = [];
         var width = 0, height = 0, dpr = 1, lastScroll = window.scrollY, scrollKick = 0;
-        var maxCount = reduce ? 18 : (window.innerWidth < 700 ? 34 : 72);
+        var mobile = window.innerWidth < 700 || (window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+        var lowPower = mobile || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.connection && navigator.connection.saveData);
+        var maxCount = reduce ? 10 : (lowPower ? 12 : 72);
+        var frame = 0, running = true;
 
         function resize() {
-            dpr = Math.min(2, window.devicePixelRatio || 1);
+            dpr = lowPower ? 1 : Math.min(2, window.devicePixelRatio || 1);
             width = window.innerWidth; height = window.innerHeight;
             canvas.width = width * dpr; canvas.height = height * dpr;
             canvas.style.width = width + "px"; canvas.style.height = height + "px";
@@ -111,8 +115,8 @@
                         var force = (150 - distance) / 150 * .022;
                         p.vx += dx / distance * force; p.vy += dy / distance * force;
                     }
-                    p.vx += Math.sin(p.phase + pulse) * .0012;
-                    p.vy += scrollKick * .00045;
+                    if (!lowPower) p.vx += Math.sin(p.phase + pulse) * .0012;
+                    p.vy += scrollKick * (lowPower ? .0002 : .00045);
                     p.vx *= .994; p.vy = Math.max(-.3, Math.min(.9, p.vy * .996));
                     p.x += p.vx; p.y += p.vy;
                 }
@@ -121,6 +125,7 @@
                 var alpha = .27 + Math.sin(p.phase + pulse * 2) * .12;
                 ctx.beginPath(); ctx.fillStyle = "hsla(" + p.hue + ", 90%, 74%, " + alpha + ")";
                 ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+                if (lowPower) continue;
                 for (var j = i + 1; j < particles.length; j++) {
                     var q = particles[j], lx = p.x - q.x, ly = p.y - q.y, dist = Math.sqrt(lx * lx + ly * ly);
                     if (dist < 118) {
@@ -131,10 +136,14 @@
                 }
             }
             scrollKick *= .90;
-            if (!reduce) requestAnimationFrame(draw);
+            if (!reduce && running) {
+                if (lowPower) window.setTimeout(function () { requestAnimationFrame(draw); }, 40);
+                else requestAnimationFrame(draw);
+            }
         }
         window.addEventListener("resize", resize, { passive: true });
         window.addEventListener("scroll", function () { scrollKick = window.scrollY - lastScroll; lastScroll = window.scrollY; }, { passive: true });
+        document.addEventListener("visibilitychange", function () { running = !document.hidden; }, { passive: true });
         resize(); draw(0);
     }
 

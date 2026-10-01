@@ -1858,3 +1858,17 @@ button, .qa { overflow: hidden; }
 [data-theme="light"] .particle-canvas { opacity: .22; mix-blend-mode: multiply; }
 @media (max-width: 767px) { .particle-canvas { opacity: .48; } }
 @media (prefers-reduced-motion: reduce) { .particle-canvas { opacity: .18; } }
+
+/* Mobile performance mode: keep the interface lively without taxing low-power devices. */
+@media (max-width: 767px), (pointer: coarse) {
+    [data-theme="dark"] body::after,
+    [data-theme="dark"] .app::before { animation: none !important; opacity: .05; }
+    [data-theme="dark"] .hero-chips .hchip,
+    [data-theme="dark"] .sec-ico,
+    [data-theme="dark"] .tl-dot { animation: none !important; }
+    [data-theme="dark"] .fin-card.balance::before,
+    [data-theme="dark"] .qa::after { display: none; }
+    .particle-canvas { opacity: .25; }
+    .reveal-on-scroll { transition-duration: .28s; }
+    .card, .fin-card { animation-duration: .28s; }
+}
