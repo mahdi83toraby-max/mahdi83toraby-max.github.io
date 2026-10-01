@@ -74,6 +74,13 @@
     }
 
     function initParticles() {
+        // On touch devices the canvas is the main source of GPU/CPU pressure.
+        // Keep the mobile UI responsive; desktop retains the full effect.
+        var touchDevice = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+        var narrow = window.matchMedia && window.matchMedia("(max-width: 767px)").matches;
+        var saveData = navigator.connection && navigator.connection.saveData;
+        var cores = navigator.hardwareConcurrency || 8;
+        if (touchDevice || narrow || saveData || cores <= 4) return;
         if (document.querySelector("canvas.particle-canvas")) return;
         var canvas = document.createElement("canvas");
         canvas.className = "particle-canvas";
@@ -83,8 +90,8 @@
         if (!ctx) return;
         var particles = [];
         var width = 0, height = 0, dpr = 1, lastScroll = window.scrollY, scrollKick = 0;
-        var mobile = window.innerWidth < 700 || (window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
-        var lowPower = mobile || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.connection && navigator.connection.saveData);
+        var mobile = false;
+        var lowPower = false;
         var maxCount = reduce ? 10 : (lowPower ? 12 : 72);
         var frame = 0, running = true;
 
@@ -164,13 +171,20 @@
                 try { initParticles(); } catch (error) { console.warn("SGM particle field unavailable", error); }
             }
         }, 350);
-        document.addEventListener("pointermove", function (event) { setPointer(event.clientX, event.clientY); }, { passive: true });
+        if (window.matchMedia && window.matchMedia("(hover: hover)").matches) {
+            document.addEventListener("pointermove", function (event) { setPointer(event.clientX, event.clientY); }, { passive: true });
+        }
         document.addEventListener("click", addRipple, { passive: true });
         window.addEventListener("scroll", function () { if (!raf) raf = requestAnimationFrame(updateScroll); }, { passive: true });
         updateScroll();
         reveal();
         if ("MutationObserver" in window) {
-            new MutationObserver(function () { reveal(); }).observe(document.getElementById("app") || document.body, { childList: true, subtree: true });
+            var revealQueued = false;
+            new MutationObserver(function () {
+                if (revealQueued) return;
+                revealQueued = true;
+                window.setTimeout(function () { revealQueued = false; reveal(); }, 120);
+            }).observe(document.getElementById("app") || document.body, { childList: true, subtree: true });
         }
         initTilt();
     }

@@ -21,20 +21,20 @@
     <script type="importmap">{
   "imports": {
     "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.958z1vx7fr.js",
+    "./_framework/dotnet.js": "./_framework/dotnet.0yn7lpi2v8.js",
     "./_framework/dotnet.native.js": "./_framework/dotnet.native.b6l13xorvf.js",
-    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.v06hirbjsv.js",
-    "./_framework/dotnet.js": "./_framework/dotnet.szjdntoasj.js"
+    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.v06hirbjsv.js"
   },
   "scopes": {},
   "integrity": {
     "./_framework/blazor.webassembly.958z1vx7fr.js": "sha256-A59Tr9HqEhHMu8kU7kruLI9ayw5MRS6Lvc6z7jCbghk=",
     "./_framework/blazor.webassembly.js": "sha256-A59Tr9HqEhHMu8kU7kruLI9ayw5MRS6Lvc6z7jCbghk=",
-    "./_framework/dotnet.js": "sha256-iE4E5dINDDmSPQZ+gLTFQXE4wSf7bwfVxdUMDKkrjTE=",
+    "./_framework/dotnet.0yn7lpi2v8.js": "sha256-CLKrgMJuf9rlqeKrjXakfEsNy0AiYUhemvcNbQ7X7JI=",
+    "./_framework/dotnet.js": "sha256-CLKrgMJuf9rlqeKrjXakfEsNy0AiYUhemvcNbQ7X7JI=",
     "./_framework/dotnet.native.b6l13xorvf.js": "sha256-jZddobLBM2C3lQhYQ61xSQJ/WqD3eQCO3RzoHGaOjx0=",
     "./_framework/dotnet.native.js": "sha256-jZddobLBM2C3lQhYQ61xSQJ/WqD3eQCO3RzoHGaOjx0=",
     "./_framework/dotnet.runtime.js": "sha256-QbnqrZGHtGq7wudS17/AYEPpH9JkphrsyVllD6JHmds=",
-    "./_framework/dotnet.runtime.v06hirbjsv.js": "sha256-QbnqrZGHtGq7wudS17/AYEPpH9JkphrsyVllD6JHmds=",
-    "./_framework/dotnet.szjdntoasj.js": "sha256-iE4E5dINDDmSPQZ+gLTFQXE4wSf7bwfVxdUMDKkrjTE="
+    "./_framework/dotnet.runtime.v06hirbjsv.js": "sha256-QbnqrZGHtGq7wudS17/AYEPpH9JkphrsyVllD6JHmds="
   }
 }</script>
     <script>
@@ -85,23 +85,6 @@
     </div>
     <script src="interaction.js"></script>
     <script src="_framework/blazor.webassembly.958z1vx7fr.js"></script>
-    <script>
-        (function () {
-            function bootParticleFallback() {
-                if (document.querySelector("canvas.particle-canvas")) return;
-                var c = document.createElement("canvas"), x = c.getContext("2d");
-                if (!x) return;
-                c.className = "particle-canvas"; c.setAttribute("aria-hidden", "true"); document.body.appendChild(c);
-                var w = 0, h = 0, d = 1, ps = [], mouse = { x: -999, y: -999 }, mobile = innerWidth < 700 || matchMedia("(pointer: coarse)").matches;
-                function resize() { w = innerWidth; h = innerHeight; c.width = w * d; c.height = h * d; c.style.width = w + "px"; c.style.height = h + "px"; x.setTransform(d, 0, 0, d, 0, 0); }
-                resize(); for (var i = 0; i < (mobile ? 10 : 58); i++) ps.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - .5) * .25, vy: .1 + Math.random() * .35, r: 1 + Math.random() * 2, hue: 190 + Math.random() * 100 });
-                addEventListener("resize", resize, { passive: true }); addEventListener("pointermove", function (e) { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
-                function frame(t) { x.clearRect(0, 0, w, h); ps.forEach(function (p, i) { var dx = p.x - mouse.x, dy = p.y - mouse.y, dist = Math.hypot(dx, dy) || 1; if (dist < 145) { p.vx += dx / dist * .018; p.vy += dy / dist * .018; } p.x += p.vx; p.y += p.vy; if (p.x < -10) p.x = w + 10; if (p.x > w + 10) p.x = -10; if (p.y < -10) p.y = h + 10; if (p.y > h + 10) p.y = -10; x.fillStyle = "hsla(" + p.hue + ",90%,74%,.55)"; x.beginPath(); x.arc(p.x, p.y, p.r, 0, 7); x.fill(); if (!mobile) for (var j = i + 1; j < ps.length; j++) { var q = ps[j], dd = Math.hypot(p.x - q.x, p.y - q.y); if (dd < 110) { x.strokeStyle = "hsla(220,85%,75%," + ((1 - dd / 110) * .18) + ")"; x.beginPath(); x.moveTo(p.x, p.y); x.lineTo(q.x, q.y); x.stroke(); } } }); mobile ? setTimeout(function () { requestAnimationFrame(frame); }, 50) : requestAnimationFrame(frame); }
-                requestAnimationFrame(frame);
-            }
-            addEventListener("load", function () { setTimeout(bootParticleFallback, 650); });
-        })();
-    </script>
 </body>
 
 </html>

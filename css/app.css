@@ -1872,3 +1872,27 @@ button, .qa { overflow: hidden; }
     .reveal-on-scroll { transition-duration: .28s; }
     .card, .fin-card { animation-duration: .28s; }
 }
+
+
+/* SGM mobile fast path — prioritize touch response and battery over ambience. */
+@media (max-width: 767px), (pointer: coarse) {
+    html { scroll-behavior: auto; }
+    .particle-canvas, .cursor-glow { display: none !important; }
+    [data-theme="dark"] body::after,
+    [data-theme="dark"] .app::before { display: none !important; }
+    .scroll-progress { height: 2px; box-shadow: none; transition: none; }
+    .reveal-on-scroll { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .card, .fin-card { animation: none !important; }
+    .topbar, .hero, .card, .fin-card, .banner, .state-card, .modal-layer {
+        will-change: auto;
+    }
+    .card.is-tilting, .fin-card.is-tilting, .hero.is-tilting {
+        transform: none !important;
+        box-shadow: inherit !important;
+    }
+    .click-ripple { animation-duration: .35s; }
+    * { -webkit-tap-highlight-color: transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .particle-canvas { display: none !important; }
+}
