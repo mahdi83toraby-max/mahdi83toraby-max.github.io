@@ -138,6 +138,8 @@
         resize(); draw(0);
     }
 
+    window.sgmInitParticles = initParticles;
+
     function installObservers() {
         var progress = document.createElement("div");
         progress.className = "scroll-progress";
@@ -147,7 +149,12 @@
         glow.className = "cursor-glow";
         glow.setAttribute("aria-hidden", "true");
         document.body.appendChild(glow);
-        initParticles();
+        try { initParticles(); } catch (error) { console.warn("SGM particle field delayed", error); }
+        window.setTimeout(function () {
+            if (!document.querySelector("canvas.particle-canvas")) {
+                try { initParticles(); } catch (error) { console.warn("SGM particle field unavailable", error); }
+            }
+        }, 350);
         document.addEventListener("pointermove", function (event) { setPointer(event.clientX, event.clientY); }, { passive: true });
         document.addEventListener("click", addRipple, { passive: true });
         window.addEventListener("scroll", function () { if (!raf) raf = requestAnimationFrame(updateScroll); }, { passive: true });
