@@ -1800,3 +1800,42 @@ a:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) {
     [data-theme="dark"] body::after, [data-theme="dark"] .app::before { animation: none; }
 }
+
+/* ========================================================================
+   SGM Interactive Motion — pointer, scroll and touch feedback
+   ======================================================================== */
+.scroll-progress {
+    position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 1000; pointer-events: none;
+    transform-origin: right center; transform: scaleX(0);
+    background: linear-gradient(90deg, #55e0b5, #78a7ff 46%, #bd78ff);
+    box-shadow: 0 0 16px rgba(121,167,255,.9);
+    transition: transform .12s linear;
+}
+html[dir="rtl"] .scroll-progress { transform: scaleX(calc(var(--scroll-progress, 0%) / 100)); transform-origin: right center; }
+.cursor-glow {
+    position: fixed; z-index: 0; pointer-events: none; width: 260px; height: 260px; border-radius: 50%;
+    left: var(--pointer-x, 50vw); top: var(--pointer-y, 40vh); transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(115,161,255,.12), transparent 68%); filter: blur(9px); opacity: 0; transition: opacity .35s ease;
+}
+@media (hover: hover) { .cursor-glow { opacity: .9; } }
+.reveal-on-scroll { opacity: 0; transform: translateY(20px) scale(.985); transition: opacity .65s ease, transform .7s cubic-bezier(.2,.75,.2,1); }
+.reveal-on-scroll.is-visible { opacity: 1; transform: translateY(0) scale(1); }
+.card.is-tilting, .fin-card.is-tilting, .hero.is-tilting {
+    transform: perspective(1100px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateY(-4px) scale(1.008) !important;
+    transition: transform .08s linear, border-color .2s ease, box-shadow .2s ease;
+    box-shadow: 0 26px 72px rgba(0,0,0,.42), 0 0 34px rgba(104,145,255,.10), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.click-ripple { position: absolute; width: 12px; height: 12px; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%) scale(0); background: rgba(255,255,255,.42); animation: clickRipple .65s ease-out forwards; }
+button, .qa { overflow: hidden; }
+@keyframes clickRipple { to { transform: translate(-50%, -50%) scale(18); opacity: 0; } }
+[data-theme="dark"] .topbar { transform: translateY(calc(min(var(--scroll-y, 0px), 40px) * -.08)); }
+@media (max-width: 767px) {
+    .cursor-glow { display: none; }
+    .reveal-on-scroll { transform: translateY(12px); }
+    .card.is-tilting, .fin-card.is-tilting, .hero.is-tilting { transform: translateY(-2px) scale(1.003) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .scroll-progress { transition: none; }
+    .reveal-on-scroll { opacity: 1; transform: none; transition: none; }
+    .cursor-glow, .click-ripple { display: none; }
+}
