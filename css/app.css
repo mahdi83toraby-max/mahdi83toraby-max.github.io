@@ -2119,3 +2119,24 @@ button, .qa { overflow: hidden; }
     .app.weekly-fullscreen #tasks { padding: 10px; }
     .app.weekly-fullscreen #tasks .card-head { gap: 8px; }
 }
+.week-event { cursor: grab; touch-action: none; user-select: none; }
+.week-event:active { cursor: grabbing; }
+.week-event-disabled { pointer-events: none; cursor: wait; }
+.week-event-dragging { opacity: .28; }
+.week-day-events.week-drop-target { outline: 2px dashed var(--brand); outline-offset: -3px; background-color: var(--brand-soft); }
+.week-drag-ghost {
+    position: fixed;
+    z-index: 20000;
+    max-width: min(320px, 70vw);
+    padding: 8px 12px;
+    border: 1px solid var(--brand);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-pop);
+    direction: rtl;
+    font-size: .78rem;
+    line-height: 1.5;
+    pointer-events: none;
+    white-space: nowrap;
+}

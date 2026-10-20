@@ -197,3 +197,149 @@
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", installObservers);
     else installObservers();
 })();
+
+
+(function () {
+    "use strict";
+    var dotNet = null;
+    var drag = null;
+    var snapMinutes = 15;
+
+    function zoneAt(x, y) {
+        var target = document.elementFromPoint(x, y);
+        return target && target.closest ? target.closest(".week-day-events[data-week-day]") : null;
+    }
+
+    function formatTime(minutes) {
+        var format = new Intl.NumberFormat("fa-IR", { minimumIntegerDigits: 2, useGrouping: false });
+        return format.format(Math.floor(minutes / 60)) + ":" + format.format(minutes % 60);
+    }
+
+    function minuteAt(zone, x) {
+        var rect = zone.getBoundingClientRect();
+        if (!rect.width) return 0;
+        var ratio = Math.max(0, Math.min(1, (rect.right - x) / rect.width));
+        return Math.round((ratio * 1440) / snapMinutes) * snapMinutes;
+    }
+
+    function makeGhost(state, event) {
+        if (!state.ghost) {
+            state.ghost = document.createElement("div");
+            state.ghost.className = "week-drag-ghost";
+            document.body.appendChild(state.ghost);
+        }
+        state.ghost.textContent = state.zone
+            ? state.title + " · " + state.zone.dataset.weekDay + " · " + formatTime(state.previewStart) + "–" + formatTime(state.previewEnd)
+            : state.title;
+        state.ghost.style.left = (event.clientX + 14) + "px";
+        state.ghost.style.top = (event.clientY + 14) + "px";
+    }
+
+    function finishVisuals(state) {
+        if (!state) return;
+        state.bar.classList.remove("week-event-dragging");
+        if (state.zone) state.zone.classList.remove("week-drop-target");
+        if (state.ghost) state.ghost.remove();
+    }
+
+    function stopTracking() {
+        document.removeEventListener("pointermove", onPointerMove, true);
+        document.removeEventListener("pointerup", onPointerUp, true);
+        document.removeEventListener("pointercancel", onPointerCancel, true);
+    }
+
+    function onPointerDown(event) {
+        var bar = event.target.closest && event.target.closest(".week-event[data-task-id]");
+        if (!bar || event.button !== 0 || event.isPrimary === false || !dotNet) return;
+        event.preventDefault();
+        var rect = bar.getBoundingClientRect();
+        var duration = Math.max(1, Number(bar.dataset.endMinute) - Number(bar.dataset.startMinute));
+        var grabbedFromRight = rect.width ? Math.max(0, Math.min(1, (rect.right - event.clientX) / rect.width)) : 0;
+        drag = {
+            bar: bar,
+            pointerId: event.pointerId,
+            taskId: bar.dataset.taskId,
+            title: bar.dataset.title || bar.textContent.trim(),
+            startMinute: Number(bar.dataset.startMinute),
+            endMinute: Number(bar.dataset.endMinute),
+            grabOffsetMinutes: grabbedFromRight * duration,
+            downX: event.clientX,
+            downY: event.clientY,
+            dragging: false,
+            zone: null,
+            ghost: null
+        };
+        document.addEventListener("pointermove", onPointerMove, true);
+        document.addEventListener("pointerup", onPointerUp, true);
+        document.addEventListener("pointercancel", onPointerCancel, true);
+    }
+
+    function onPointerMove(event) {
+        var state = drag;
+        if (!state || event.pointerId !== state.pointerId) return;
+        if (!state.dragging && Math.hypot(event.clientX - state.downX, event.clientY - state.downY) < 5) return;
+        state.dragging = true;
+        state.bar.classList.add("week-event-dragging");
+        state.zone = zoneAt(event.clientX, event.clientY);
+        document.querySelectorAll(".week-drop-target").forEach(function (el) { el.classList.remove("week-drop-target"); });
+        if (state.zone) {
+            state.zone.classList.add("week-drop-target");
+            var duration = Math.max(1, state.endMinute - state.startMinute);
+            var maxStart = Math.floor(Math.max(0, 1440 - duration) / snapMinutes) * snapMinutes;
+            var snapped = Math.round((minuteAt(state.zone, event.clientX) - state.grabOffsetMinutes) / snapMinutes) * snapMinutes;
+            state.previewStart = Math.min(maxStart, Math.max(0, snapped));
+            state.previewEnd = state.previewStart + duration;
+        }
+        makeGhost(state, event);
+        event.preventDefault();
+    }
+
+    async function onPointerUp(event) {
+        var state = drag;
+        if (!state || event.pointerId !== state.pointerId) return;
+        drag = null;
+        stopTracking();
+        var zone = zoneAt(event.clientX, event.clientY);
+        var shouldMove = state.dragging && zone && dotNet;
+        var payload = null;
+        if (shouldMove) {
+            var duration = Math.max(1, state.endMinute - state.startMinute);
+            var maxStart = Math.floor(Math.max(0, 1440 - duration) / snapMinutes) * snapMinutes;
+            var snapped = Math.round((minuteAt(zone, event.clientX) - state.grabOffsetMinutes) / snapMinutes) * snapMinutes;
+            var start = Math.min(maxStart, Math.max(0, snapped));
+            payload = [state.taskId, zone.dataset.weekDay, start, start + duration];
+        }
+        finishVisuals(state);
+        if (!payload) return;
+        try {
+            await dotNet.invokeMethodAsync("MoveWeekTaskAsync", payload[0], payload[1], payload[2], payload[3]);
+        } catch (error) {
+            console.error("SGM: moving the weekly task failed", error);
+        }
+    }
+
+    function onPointerCancel(event) {
+        if (!drag || event.pointerId !== drag.pointerId) return;
+        var state = drag;
+        drag = null;
+        stopTracking();
+        finishVisuals(state);
+    }
+
+    window.sgm = window.sgm || {};
+    window.sgm.enableWeekDrag = function (reference) {
+        if (dotNet) window.sgm.disableWeekDrag();
+        dotNet = reference;
+        document.addEventListener("pointerdown", onPointerDown, true);
+    };
+    window.sgm.disableWeekDrag = function () {
+        document.removeEventListener("pointerdown", onPointerDown, true);
+        if (drag) {
+            var state = drag;
+            drag = null;
+            stopTracking();
+            finishVisuals(state);
+        }
+        dotNet = null;
+    };
+})();
