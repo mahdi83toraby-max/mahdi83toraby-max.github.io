@@ -2023,3 +2023,57 @@ button, .qa { overflow: hidden; }
 @media (max-width: 767px) {
     .task-reason-btn { font-size: .7rem; padding: 5px 8px; }
 }
+
+
+/* ---------------------------- Weekly overview ---------------------------- */
+.week-toggle {
+    margin-inline-start: auto;
+    border: 1px solid var(--border-strong);
+    background: var(--brand-soft);
+    color: var(--brand-text);
+    border-radius: 999px;
+    padding: 7px 13px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .2s, transform .2s;
+}
+.week-toggle:hover { background: var(--brand-soft); transform: translateY(-1px); }
+.week-nav { display: flex; align-items: center; gap: 10px; margin-inline-start: auto; }
+.week-nav strong { color: var(--text-2); font-size: .88rem; white-space: nowrap; }
+.week-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 0 0 14px; color: var(--muted); font-size: .78rem; }
+.week-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.week-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; }
+.week-legend .future { background: #3682f6; }
+.week-legend .ongoing { background: #9299a5; }
+.week-legend .overdue { background: #e5484d; }
+.week-legend .complete { background: #12a05c; }
+.week-scroll { overflow: auto; max-width: 100%; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); scrollbar-width: thin; }
+.week-grid { display: grid; grid-template-columns: 118px repeat(var(--week-hours), minmax(58px, 1fr)); min-width: 1510px; direction: ltr; }
+.week-corner, .week-hour { position: sticky; top: 0; z-index: 3; min-height: 43px; display: grid; place-items: center; background: var(--surface-2); border-bottom: 1px solid var(--border); border-inline-end: 1px solid var(--border); color: var(--muted); font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.week-corner { left: 0; z-index: 4; direction: rtl; }
+.week-day { position: sticky; left: 0; z-index: 2; grid-column: 1; min-height: 92px; display: flex; flex-direction: column; justify-content: center; padding: 8px 11px; text-align: right; direction: rtl; background: var(--surface-2); border-bottom: 1px solid var(--border); border-inline-end: 1px solid var(--border); }
+.week-day b { font-size: .84rem; }
+.week-day small { color: var(--muted); font-size: .7rem; }
+.week-day.is-today { box-shadow: inset -3px 0 var(--brand); color: var(--brand-text); }
+.week-slot { min-width: 0; min-height: 92px; padding: 5px 3px; display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid var(--border); border-inline-end: 1px solid var(--border); background: var(--surface); }
+.week-slot:nth-child(odd) { background: color-mix(in srgb, var(--surface-2) 44%, var(--surface)); }
+.week-task { min-width: 0; padding: 4px 5px; border-radius: 7px; border-inline-start: 3px solid currentColor; font-size: .66rem; line-height: 1.35; direction: rtl; overflow: hidden; }
+.week-task.future { color: #2468cb; background: rgba(54,130,246,.13); }
+.week-task.ongoing { color: #626b78; background: rgba(146,153,165,.2); }
+.week-task.overdue { color: #c9363c; background: rgba(229,72,77,.14); }
+.week-task.complete { color: #13834e; background: rgba(18,160,92,.14); }
+.week-task-time { display: block; font-size: .62rem; opacity: .82; font-variant-numeric: tabular-nums; }
+.week-task-title { display: block; overflow-wrap: anywhere; }
+.week-unscheduled { grid-column: 2 / -1; min-height: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 4px 6px; border-bottom: 1px solid var(--border); background: var(--surface-2); direction: rtl; }
+.week-unscheduled::before { content: "بدون ساعت:"; color: var(--muted); font-size: .65rem; white-space: nowrap; }
+[data-theme="dark"] .week-task.future { color: #8ab7ff; background: rgba(54,130,246,.2); }
+[data-theme="dark"] .week-task.ongoing { color: #c0c6d0; background: rgba(146,153,165,.2); }
+[data-theme="dark"] .week-task.overdue { color: #ff9295; background: rgba(229,72,77,.2); }
+[data-theme="dark"] .week-task.complete { color: #69dfa0; background: rgba(18,160,92,.2); }
+@media (max-width: 767px) {
+    .week-toggle { margin-inline-start: 0; padding: 6px 10px; font-size: .78rem; }
+    .week-nav { margin-inline-start: 0; width: 100%; justify-content: center; flex-wrap: wrap; }
+    .week-grid { grid-template-columns: 92px repeat(var(--week-hours), minmax(56px, 1fr)); min-width: 1436px; }
+    .week-day { padding: 7px; }
+}
