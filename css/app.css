@@ -2058,7 +2058,11 @@ button, .qa { overflow: hidden; }
 .week-day.is-today { box-shadow: inset -3px 0 var(--brand); color: var(--brand-text); }
 .week-slot { min-width: 0; min-height: 92px; padding: 5px 3px; display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid var(--border); border-inline-end: 1px solid var(--border); background: var(--surface); }
 .week-slot:nth-child(odd) { background: color-mix(in srgb, var(--surface-2) 44%, var(--surface)); }
+.week-day-events { position: relative; grid-column: 2 / -1; min-height: 92px; background-color: var(--surface); background-image: repeating-linear-gradient(to left, transparent 0, transparent calc(100% - 1px), var(--border) calc(100% - 1px), var(--border) 100%); background-size: 4.1666666667% 100%; background-repeat: repeat-x; border-bottom: 1px solid var(--border); }
 .week-task { min-width: 0; padding: 4px 5px; border-radius: 7px; border-inline-start: 3px solid currentColor; font-size: .66rem; line-height: 1.35; direction: rtl; overflow: hidden; }
+.week-event { position: absolute; box-sizing: border-box; height: 28px; display: flex; align-items: center; gap: 5px; z-index: 1; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.week-event .week-task-time { flex: 0 0 auto; }
+.week-event .week-task-title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .week-task.future { color: #2468cb; background: rgba(54,130,246,.13); }
 .week-task.ongoing { color: #626b78; background: rgba(146,153,165,.2); }
 .week-task.overdue { color: #c9363c; background: rgba(229,72,77,.14); }
