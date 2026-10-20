@@ -2077,3 +2077,41 @@ button, .qa { overflow: hidden; }
     .week-grid { grid-template-columns: 92px repeat(var(--week-hours), minmax(56px, 1fr)); min-width: 1436px; }
     .week-day { padding: 7px; }
 }
+
+
+/* Full-screen weekly schedule mode */
+.app.weekly-fullscreen {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+.app.weekly-fullscreen #tasks {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: clamp(12px, 2vw, 28px);
+    border-radius: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    transform: none !important;
+    animation: none !important;
+}
+.app.weekly-fullscreen #tasks .card-head { flex: 0 0 auto; }
+.app.weekly-fullscreen #tasks .week-legend { flex: 0 0 auto; }
+.app.weekly-fullscreen #tasks .week-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+}
+@media (max-width: 767px) {
+    .app.weekly-fullscreen #tasks { padding: 10px; }
+    .app.weekly-fullscreen #tasks .card-head { gap: 8px; }
+}
