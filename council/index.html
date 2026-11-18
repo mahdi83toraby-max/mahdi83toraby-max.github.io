@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اتاق تصمیم‌گیری</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1e2740; --line:#2a3552;
+    --text:#e8ecf5; --muted:#93a0bd; --accent:#4f8cff;
+    --mehdi:#2f9e6e; --ceo:#7a5af8; --sgm:#d97706; --other:#64748b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Tahoma,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100dvh}
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  header h1{font-size:16px;margin:0}
+  header .sub{color:var(--muted);font-size:12px}
+  header .sp{flex:1}
+  header label{font-size:12px;color:var(--muted)}
+  header input{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:13px;width:110px}
+  #msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .msg{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px;max-width:640px;width:fit-content;min-width:180px;cursor:pointer}
+  .msg .head{display:flex;gap:8px;align-items:baseline;margin-bottom:4px}
+  .msg .author{font-weight:bold;font-size:13px}
+  .msg .time{color:var(--muted);font-size:11px}
+  .msg .body{font-size:14px;line-height:1.9;white-space:pre-wrap;word-break:break-word}
+  .msg .quote{border-right:3px solid var(--accent);background:var(--panel2);border-radius:6px;padding:5px 8px;font-size:12px;color:var(--muted);margin-bottom:6px;white-space:pre-wrap}
+  .a-mehdi{color:var(--mehdi)} .a-ceo{color:#a78bfa} .a-sgm{color:#fbbf24} .a-other{color:var(--other)}
+  .msg.mine{align-self:flex-end;border-color:#274b3a}
+  .msg.ceo{align-self:flex-start}
+  #replybar{display:none;background:var(--panel2);border-top:1px solid var(--line);padding:8px 14px;font-size:12px;color:var(--muted);align-items:center;gap:8px}
+  #replybar b{color:var(--text)}
+  #replybar button{background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer;font-family:inherit}
+  footer{background:var(--panel);border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:8px}
+  footer textarea{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 10px;font-family:inherit;font-size:14px;resize:none;height:44px;line-height:1.7}
+  footer button{background:var(--accent);border:none;color:#fff;border-radius:10px;padding:0 20px;font-family:inherit;font-size:14px;cursor:pointer}
+  footer button:disabled{opacity:.5}
+  .hint{padding:6px 14px;font-size:11px;color:var(--muted);background:var(--panel);border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header>
+  <h1>اتاق تصمیم‌گیری</h1>
+  <span class="sub">گفت‌وگوی مهدی، مدیرعامل و ربات SGM — روی Supabase و GitHub Pages خودت</span>
+  <span class="sp"></span>
+  <label>نام شما:</label>
+  <input id="myname" value="مهدی">
+</header>
+
+<div id="msgs"></div>
+
+<div id="replybar">
+  <span>در پاسخ به <b id="replywho"></b>: <span id="replytext"></span></span>
+  <span style="flex:1"></span>
+  <button id="replycancel" type="button">لغو</button>
+</div>
+
+<footer>
+  <textarea id="draft" placeholder="پیامتان را بنویسید… (برای پاسخ، روی هر پیام بزنید)"></textarea>
+  <button id="send" type="button">ارسال</button>
+</footer>
+<div class="hint">پیام‌ها هر چند ثانیه تازه می‌شوند. مدیرعامل و ربات SGM به‌صورت دوره‌ای پیام‌ها را می‌خوانند و پاسخ می‌دهند.</div>
+
+<script>
+const SUPABASE_URL = "https://ktnixxbkzapziqplrnmo.supabase.co";
+const KEY = "sb_publishable_pD5qO7dvJP7Xik5Aw9xUsw_A6qCeArA";
+const API = SUPABASE_URL + "/rest/v1/council_messages";
+const HEADERS = { "apikey": KEY, "Authorization": "Bearer " + KEY, "Content-Type": "application/json" };
+
+const msgsEl = document.getElementById('msgs');
+const draftEl = document.getElementById('draft');
+const sendBtn = document.getElementById('send');
+const nameEl = document.getElementById('myname');
+const replybar = document.getElementById('replybar');
+const replywho = document.getElementById('replywho');
+const replytext = document.getElementById('replytext');
+let replyTo = null;
+let byId = {};
+let lastCount = -1;
+
+nameEl.value = localStorage.getItem('council_name') || 'مهدی';
+nameEl.addEventListener('change', () => localStorage.setItem('council_name', nameEl.value.trim() || 'مهدی'));
+
+function authorClass(a){
+  if (a === 'مهدی') return 'a-mehdi';
+  if (a === 'مدیرعامل') return 'a-ceo';
+  if (a === 'ربات SGM') return 'a-sgm';
+  return 'a-other';
+}
+function esc(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function fmtTime(iso){
+  try { return new Date(iso).toLocaleString('fa-IR', { timeZone:'Asia/Tehran', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit' }); }
+  catch(e){ return iso; }
+}
+
+async function load(){
+  try {
+    const r = await fetch(API + "?select=*&order=created_at.asc&limit=500", { headers: HEADERS });
+    if (!r.ok) return;
+    const rows = await r.json();
+    if (rows.length === lastCount) return;
+    lastCount = rows.length;
+    byId = {};
+    rows.forEach(m => byId[m.id] = m);
+    const nearBottom = msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight < 160;
+    msgsEl.innerHTML = rows.map(m => {
+      let q = '';
+      if (m.reply_to && byId[m.reply_to]) {
+        const t = byId[m.reply_to];
+        q = '<div class="quote">' + esc(t.author) + ': ' + esc(t.body.slice(0, 90)) + '</div>';
+      }
+      const mine = m.author === (nameEl.value.trim() || 'مهدی') ? ' mine' : '';
+      return '<div class="msg' + mine + '" data-id="' + m.id + '">' +
+        '<div class="head"><span class="author ' + authorClass(m.author) + '">' + esc(m.author) + '</span>' +
+        '<span class="time">' + fmtTime(m.created_at) + '</span></div>' + q +
+        '<div class="body">' + esc(m.body) + '</div></div>';
+    }).join('');
+    msgsEl.querySelectorAll('.msg').forEach(el => {
+      el.addEventListener('click', () => {
+        const m = byId[el.dataset.id];
+        if (!m) return;
+        replyTo = m.id;
+        replywho.textContent = m.author;
+        replytext.textContent = m.body.slice(0, 60);
+        replybar.style.display = 'flex';
+        draftEl.focus();
+      });
+    });
+    if (nearBottom || lastCount <= rows.length) msgsEl.scrollTop = msgsEl.scrollHeight;
+  } catch(e) { /* silent retry next tick */ }
+}
+
+document.getElementById('replycancel').addEventListener('click', () => {
+  replyTo = null; replybar.style.display = 'none';
+});
+
+async function send(){
+  const body = draftEl.value.trim();
+  if (!body) return;
+  sendBtn.disabled = true;
+  try {
+    const payload = { author: nameEl.value.trim() || 'مهدی', body: body, reply_to: replyTo };
+    const r = await fetch(API, { method: 'POST', headers: { ...HEADERS, 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) });
+    if (r.ok) {
+      draftEl.value = '';
+      replyTo = null; replybar.style.display = 'none';
+      lastCount = -1;
+      await load();
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+    }
+  } finally { sendBtn.disabled = false; }
+}
+sendBtn.addEventListener('click', send);
+draftEl.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) send(); });
+
+load();
+setInterval(load, 4000);
+</script>
+</body>
+</html>
