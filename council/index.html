@@ -25,6 +25,8 @@
   .msg .time{color:var(--muted);font-size:11px}
   .msg .body{font-size:14px;line-height:1.9;white-space:pre-wrap;word-break:break-word}
   .msg .quote{border-right:3px solid var(--accent);background:var(--panel2);border-radius:6px;padding:5px 8px;font-size:12px;color:var(--muted);margin-bottom:6px;white-space:pre-wrap}
+  .msg .rbtn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;font-size:11px;padding:2px 9px;cursor:pointer;font-family:inherit;margin-inline-start:auto}
+  .msg .rbtn:hover{color:var(--text);border-color:var(--accent)}
   .a-mehdi{color:var(--mehdi)} .a-ceo{color:#a78bfa} .a-sgm{color:#fbbf24} .a-other{color:var(--other)}
   .msg.mine{align-self:flex-end;border-color:#274b3a}
   .msg.ceo{align-self:flex-start}
@@ -112,19 +114,22 @@ async function load(){
       const mine = m.author === (nameEl.value.trim() || 'مهدی') ? ' mine' : '';
       return '<div class="msg' + mine + '" data-id="' + m.id + '">' +
         '<div class="head"><span class="author ' + authorClass(m.author) + '">' + esc(m.author) + '</span>' +
-        '<span class="time">' + fmtTime(m.created_at) + '</span></div>' + q +
+        '<span class="time">' + fmtTime(m.created_at) + '</span>' +
+        '<button class="rbtn" type="button" data-reply="' + m.id + '">پاسخ</button></div>' + q +
         '<div class="body">' + esc(m.body) + '</div></div>';
     }).join('');
+    function setReply(m){
+      replyTo = m.id;
+      replywho.textContent = m.author;
+      replytext.textContent = m.body.slice(0, 60);
+      replybar.style.display = 'flex';
+      draftEl.focus();
+    }
     msgsEl.querySelectorAll('.msg').forEach(el => {
-      el.addEventListener('click', () => {
-        const m = byId[el.dataset.id];
-        if (!m) return;
-        replyTo = m.id;
-        replywho.textContent = m.author;
-        replytext.textContent = m.body.slice(0, 60);
-        replybar.style.display = 'flex';
-        draftEl.focus();
-      });
+      el.addEventListener('click', () => { const m = byId[el.dataset.id]; if (m) setReply(m); });
+    });
+    msgsEl.querySelectorAll('.rbtn').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); const m = byId[btn.dataset.reply]; if (m) setReply(m); });
     });
     if (nearBottom || lastCount <= rows.length) msgsEl.scrollTop = msgsEl.scrollHeight;
   } catch(e) { /* silent retry next tick */ }
