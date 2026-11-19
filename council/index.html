@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
 <link rel="manifest" href="./manifest.webmanifest">
 <meta name="theme-color" content="#0f1420">
 <meta name="mobile-web-app-capable" content="yes">
@@ -14,57 +16,75 @@
 <title>اتاق تصمیم‌گیری</title>
 <style>
 :root{
-    --bg:#0e1621; --panel:#17212b; --panel2:#242f3d; --line:#242f3d;
+    --bg:#0b141d; --panel:#17212b; --panel2:#242f3d; --line:#22344a;
     --text:#ffffff; --muted:#7f91a4; --accent:#4f8cff;
     --mehdi:#2f9e6e; --ceo:#7a5af8; --sgm:#d97706; --other:#64748b;
     --bub:#182533; --mine:#2b5278;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:Tahoma,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100dvh}
-  header{background:var(--panel);padding:8px 14px;display:flex;align-items:center;gap:11px;box-shadow:0 1px 4px rgba(0,0,0,.35);z-index:2}
-  header .hava{width:40px;height:40px;border-radius:50%;background:#1e2740}
+  ::selection{background:rgba(79,140,255,.45)}
+  body{margin:0;font-family:'Vazirmatn',Tahoma,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100dvh}
+  header{background:rgba(23,33,43,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:9px 14px;display:flex;align-items:center;gap:11px;box-shadow:0 1px 6px rgba(0,0,0,.4);z-index:4}
+  header .hava{width:42px;height:42px;border-radius:50%;background:#1e2740;box-shadow:0 0 0 2px #22344a}
   header .ht{min-width:0}
-  header h1{font-size:15px;margin:0;font-weight:600}
-  header .sub{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header h1{font-size:15.5px;margin:0;font-weight:700;display:flex;align-items:center;gap:7px}
+  header .dot{width:8px;height:8px;border-radius:50%;background:#3ddc84;box-shadow:0 0 8px #3ddc84;flex:none}
+  header .sub{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
   header .sp{flex:1}
   header label{font-size:12px;color:var(--muted)}
-  header input{background:var(--panel2);border:none;color:var(--text);border-radius:16px;padding:6px 12px;font-family:inherit;font-size:13px;width:104px;outline:none}
-  #msgs{flex:1;overflow-y:auto;padding:16px 12px;display:flex;flex-direction:column;gap:4px;background-color:var(--bg);background-image:radial-gradient(rgba(255,255,255,.03) 1px,transparent 1.4px);background-size:22px 22px;scrollbar-width:thin;scrollbar-color:var(--panel2) transparent}
+  header input{background:var(--panel2);border:1px solid transparent;color:var(--text);border-radius:16px;padding:6px 12px;font-family:inherit;font-size:13px;width:104px;outline:none;transition:.15s}
+  header input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,140,255,.25)}
+  #msgs{flex:1;overflow-y:auto;padding:14px 12px 18px;display:flex;flex-direction:column;background:
+    radial-gradient(1000px 480px at 85% -10%, rgba(43,82,120,.35) 0%, rgba(11,20,29,0) 60%),
+    radial-gradient(800px 420px at 8% 108%, rgba(38,64,96,.28) 0%, rgba(11,20,29,0) 55%),
+    radial-gradient(rgba(255,255,255,.028) 1px, transparent 1.4px),
+    var(--bg);
+    background-size:auto,auto,22px 22px,auto;scrollbar-width:thin;scrollbar-color:var(--panel2) transparent}
   #msgs::-webkit-scrollbar{width:6px}
   #msgs::-webkit-scrollbar-thumb{background:var(--panel2);border-radius:3px}
-  .row{display:flex;align-items:flex-end;gap:7px;max-width:88%;align-self:flex-start;cursor:pointer;margin-top:6px}
+  .daysep{position:sticky;top:6px;display:flex;justify-content:center;margin:12px 0 2px;z-index:3}
+  .daysep span{background:rgba(26,40,56,.94);color:#a9bdd1;font-size:11.5px;padding:3px 13px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+  .row{display:flex;align-items:flex-end;gap:7px;max-width:86%;align-self:flex-start;cursor:pointer;margin-top:10px}
+  .row.grp{margin-top:2px}
   .row.mine{align-self:flex-end}
-  .ava{width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:bold;color:#fff}
-  .av-mehdi{background:var(--mehdi)} .av-ceo{background:var(--ceo)} .av-sgm{background:var(--sgm)} .av-other{background:var(--other)}
-  .bub{background:var(--bub);border-radius:16px 16px 5px 16px;padding:7px 11px 6px;box-shadow:0 1px 2px rgba(0,0,0,.3);min-width:120px}
-  .row.mine .bub{background:var(--mine);border-radius:16px 16px 16px 5px}
-  .aname{font-weight:bold;font-size:13px;margin-bottom:2px}
+  .ava{width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .ava.sp{background:transparent;box-shadow:none}
+  .av-mehdi{background:linear-gradient(135deg,#37c37e,#1e8a54)} .av-ceo{background:linear-gradient(135deg,#9a7bff,#683df0)} .av-sgm{background:linear-gradient(135deg,#f6a821,#dd7a06)} .av-other{background:linear-gradient(135deg,#7d8ea3,#52657a)}
+  .bub{background:var(--bub);border:1px solid rgba(255,255,255,.045);border-radius:17px 17px 17px 6px;padding:8px 12px 7px;box-shadow:0 2px 7px rgba(0,0,0,.28);min-width:120px}
+  .row.mine .bub{background:linear-gradient(135deg,#31639f,#2b5278);border-color:rgba(255,255,255,.06);border-radius:17px 17px 6px 17px}
+  .aname{font-weight:700;font-size:13px;margin-bottom:2px}
   .a-mehdi{color:#5cc98f} .a-ceo{color:#a78bfa} .a-sgm{color:#fbbf24} .a-other{color:#94a3b8}
-  .bub .body{font-size:14.5px;line-height:1.85;white-space:pre-wrap;word-break:break-word}
-  .bub .quote{border-right:3px solid var(--accent);background:rgba(79,140,255,.10);border-radius:6px;padding:4px 8px;font-size:12.5px;color:#b9c6d4;margin:2px 0 5px;white-space:pre-wrap}
+  .bub .body{font-size:15px;line-height:1.9;white-space:pre-wrap;word-break:break-word}
+  .bub .body b{font-weight:700}
+  .bub .quote{border-right:3px solid var(--accent);background:rgba(79,140,255,.12);border-radius:8px;padding:5px 9px;font-size:12.5px;color:#bcccdc;margin:2px 0 6px;white-space:pre-wrap;line-height:1.7}
   .bub .quote b{font-size:12.5px}
-  .bub .meta{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-top:3px}
-  .bub .time{color:rgba(255,255,255,.45);font-size:11px}
-  .rbtn{background:none;border:none;color:rgba(255,255,255,.5);font-size:11.5px;padding:1px 4px;cursor:pointer;font-family:inherit}
-  .rbtn:hover{color:#fff}
+  .bub .meta{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:3px}
+  .bub .time{color:rgba(255,255,255,.48);font-size:10.5px}
+  .rbtn{background:none;border:none;color:rgba(255,255,255,.5);font-size:11.5px;padding:2px 7px;border-radius:8px;cursor:pointer;font-family:inherit;transition:.15s}
+  .rbtn:hover{color:#fff;background:rgba(255,255,255,.09)}
+  .empty{margin:auto;color:var(--muted);font-size:13.5px;text-align:center;padding:30px 20px;line-height:2}
   #replybar{display:none;background:var(--panel);border-top:1px solid rgba(255,255,255,.05);border-right:3px solid var(--accent);padding:8px 14px;font-size:12.5px;color:var(--muted);align-items:center;gap:8px}
   #replybar b{color:var(--text)}
   #replybar button{background:none;border:none;color:var(--muted);font-size:15px;padding:2px 8px;cursor:pointer;font-family:inherit}
-  footer{background:var(--panel);padding:9px 12px;display:flex;gap:9px;align-items:flex-end}
-  footer textarea{flex:1;background:var(--panel2);border:none;color:var(--text);border-radius:22px;padding:11px 16px;font-family:inherit;font-size:14.5px;resize:none;max-height:120px;min-height:44px;line-height:1.6;outline:none}
-  footer button{width:44px;height:44px;flex:none;border-radius:50%;background:var(--accent);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+  footer{background:var(--panel);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:9px;align-items:flex-end;box-shadow:0 -1px 6px rgba(0,0,0,.3)}
+  footer textarea{flex:1;background:var(--panel2);border:1px solid #22344a;color:var(--text);border-radius:24px;padding:11px 17px;font-family:inherit;font-size:15px;resize:none;max-height:120px;min-height:46px;line-height:1.65;outline:none;transition:.15s}
+  footer textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,140,255,.22)}
+  footer button{width:46px;height:46px;flex:none;border-radius:50%;background:linear-gradient(135deg,#5b97ff,#2f6fe4);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 4px 14px rgba(79,140,255,.4);transition:transform .12s}
+  footer button:active{transform:scale(.93)}
   footer button svg{width:21px;height:21px;fill:#fff;transform:scaleX(-1)}
   footer button:disabled{opacity:.5}
+  #fab{position:fixed;left:16px;bottom:96px;width:42px;height:42px;border-radius:50%;background:#1c2a3a;border:1px solid #2a3f55;color:#cfe1f5;display:none;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.45);cursor:pointer;z-index:5;padding:0}
+  #fab svg{width:22px;height:22px;fill:currentColor}
   .hint{padding:5px 14px 8px;font-size:11px;color:var(--muted);background:var(--panel)}
-  @media (max-width:560px){ .row{max-width:94%} header label{display:none} }
+  @media (max-width:560px){ .row{max-width:93%} header label{display:none} }
 </style>
 </head>
 <body>
 <header>
   <img class="hava" src="./icon.svg" alt="">
   <div class="ht">
-    <h1>اتاق تصمیم‌گیری</h1>
-    <div class="sub">مهدی، مدیرعامل، ربات SGM</div>
+    <h1><span class="dot"></span>اتاق تصمیم‌گیری</h1>
+    <div class="sub">مهدی، مدیرعامل، ربات SGM و سایر اعضا</div>
   </div>
   <span class="sp"></span>
   <label>نام شما:</label>
@@ -72,6 +92,8 @@
 </header>
 
 <div id="msgs"></div>
+
+<button id="fab" type="button" aria-label="رفتن به آخرین پیام"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
 
 <div id="replybar">
   <span>در پاسخ به <b id="replywho"></b>: <span id="replytext"></span></span>
@@ -117,6 +139,13 @@ function avClass(a){
   if (a === 'ربات SGM') return 'av-sgm';
   return 'av-other';
 }
+function fmtClock(iso){
+  try { return new Date(iso).toLocaleTimeString('fa-IR', { timeZone:'Asia/Tehran', hour:'2-digit', minute:'2-digit' }); }
+  catch(e){ return ''; }
+}
+function fmtBody(s){
+  return esc(s).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+}
 function esc(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function fmtTime(iso){
   try { return new Date(iso).toLocaleString('fa-IR', { timeZone:'Asia/Tehran', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit' }); }
@@ -133,22 +162,38 @@ async function load(){
     byId = {};
     rows.forEach(m => byId[m.id] = m);
     const nearBottom = msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight < 160;
-    msgsEl.innerHTML = rows.map(m => {
+        const dayKey = (iso) => new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(new Date(iso));
+    const todayKey = dayKey(new Date().toISOString());
+    const yKey = dayKey(new Date(Date.now() - 86400000).toISOString());
+    function dayLabel(iso){
+      const k = dayKey(iso);
+      if (k === todayKey) return 'امروز';
+      if (k === yKey) return 'دیروز';
+      return new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso));
+    }
+    let html = '';
+    let prev = null;
+    rows.forEach(m => {
       let q = '';
       if (m.reply_to && byId[m.reply_to]) {
         const t = byId[m.reply_to];
         q = '<div class="quote"><b class="' + authorClass(t.author) + '">' + esc(t.author) + '</b><br>' + esc(t.body.slice(0, 90)) + '</div>';
       }
       const isMine = m.author === (nameEl.value.trim() || 'مهدی');
-      const ava = isMine ? '' : '<div class="ava ' + avClass(m.author) + '">' + esc(m.author.trim().charAt(0)) + '</div>';
-      const aname = isMine ? '' : '<div class="aname ' + authorClass(m.author) + '">' + esc(m.author) + '</div>';
-      return '<div class="row' + (isMine ? ' mine' : '') + '" data-id="' + m.id + '">' + ava +
+      const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
+      if (newDay) html += '<div class="daysep"><span>' + dayLabel(m.created_at) + '</span></div>';
+      const grouped = !newDay && !!prev && prev.author === m.author && (new Date(m.created_at) - new Date(prev.created_at) < 7 * 60000);
+      const ava = isMine ? '' : (grouped ? '<div class="ava sp"></div>' : '<div class="ava ' + avClass(m.author) + '">' + esc(m.author.trim().charAt(0)) + '</div>');
+      const aname = (isMine || grouped) ? '' : '<div class="aname ' + authorClass(m.author) + '">' + esc(m.author) + '</div>';
+      html += '<div class="row' + (isMine ? ' mine' : '') + (grouped ? ' grp' : '') + '" data-id="' + m.id + '">' + ava +
         '<div class="bub">' + aname + q +
-        '<div class="body">' + esc(m.body) + '</div>' +
-        '<div class="meta"><span class="time">' + fmtTime(m.created_at) + '</span>' +
+        '<div class="body">' + fmtBody(m.body) + '</div>' +
+        '<div class="meta"><span class="time">' + fmtClock(m.created_at) + '</span>' +
         '<button class="rbtn" type="button" data-reply="' + m.id + '">پاسخ</button></div>' +
         '</div></div>';
-    }).join('');
+      prev = m;
+    });
+    msgsEl.innerHTML = html || '<div class="empty">هنوز پیامی نیست؛ اولین نفر باش که بحث را شروع می‌کند.</div>';
     function setReply(m){
       replyTo = m.id;
       replywho.textContent = m.author;
@@ -179,6 +224,7 @@ async function send(){
     const r = await fetch(API, { method: 'POST', headers: { ...HEADERS, 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) });
     if (r.ok) {
       draftEl.value = '';
+      draftEl.style.height = 'auto';
       replyTo = null; replybar.style.display = 'none';
       lastCount = -1;
       await load();
@@ -187,7 +233,18 @@ async function send(){
   } finally { sendBtn.disabled = false; }
 }
 sendBtn.addEventListener('click', send);
-draftEl.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) send(); });
+draftEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+draftEl.addEventListener('input', () => {
+  draftEl.style.height = 'auto';
+  draftEl.style.height = Math.min(draftEl.scrollHeight, 120) + 'px';
+});
+const fab = document.getElementById('fab');
+function syncFab(){
+  const dist = msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight;
+  fab.style.display = dist > 300 ? 'flex' : 'none';
+}
+msgsEl.addEventListener('scroll', syncFab);
+fab.addEventListener('click', () => { msgsEl.scrollTop = msgsEl.scrollHeight; });
 
 load();
 setInterval(load, 4000);
