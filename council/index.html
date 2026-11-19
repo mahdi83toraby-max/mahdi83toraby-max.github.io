@@ -177,7 +177,7 @@ async function load(){
       let q = '';
       if (m.reply_to && byId[m.reply_to]) {
         const t = byId[m.reply_to];
-        q = '<div class="quote"><b class="' + authorClass(t.author) + '">' + esc(t.author) + '</b><br>' + esc(t.body.slice(0, 90)) + '</div>';
+        q = '<div class="quote"><b class="' + authorClass(t.author) + '">' + esc(t.author) + '</b><br>' + fmtBody(t.body.slice(0, 90)) + '</div>';
       }
       const isMine = m.author === (nameEl.value.trim() || 'مهدی');
       const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
