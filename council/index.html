@@ -58,6 +58,12 @@
   .bub .body b{font-weight:700}
   .bub .quote{border-right:3px solid var(--accent);background:rgba(79,140,255,.12);border-radius:8px;padding:5px 9px;font-size:12.5px;color:#bcccdc;margin:2px 0 6px;white-space:pre-wrap;line-height:1.7}
   .bub .quote b{font-size:12.5px}
+  .bub .quote{cursor:pointer}
+  .bub .quote:active{background:rgba(79,140,255,.24)}
+  .row.flash .bub{animation:flashring 1.8s ease}
+  @keyframes flashring{0%,100%{box-shadow:0 2px 7px rgba(0,0,0,.28)}20%,55%{box-shadow:0 0 0 2px var(--accent),0 0 22px rgba(79,140,255,.65)}}
+  #toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(16px);background:#22344a;color:#e8f1fc;border:1px solid #33507a;padding:9px 18px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:60;box-shadow:0 8px 22px rgba(0,0,0,.45);white-space:nowrap}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .bub .meta{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:3px}
   .bub .time{color:rgba(255,255,255,.48);font-size:10.5px}
   .rbtn{background:none;border:none;color:rgba(255,255,255,.5);font-size:11.5px;padding:2px 7px;border-radius:8px;cursor:pointer;font-family:inherit;transition:.15s}
@@ -94,6 +100,8 @@
 <div id="msgs"></div>
 
 <button id="fab" type="button" aria-label="رفتن به آخرین پیام"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+
+<div id="toast"></div>
 
 <div id="replybar">
   <span>در پاسخ به <b id="replywho"></b>: <span id="replytext"></span></span>
@@ -177,7 +185,7 @@ async function load(){
       let q = '';
       if (m.reply_to && byId[m.reply_to]) {
         const t = byId[m.reply_to];
-        q = '<div class="quote"><b class="' + authorClass(t.author) + '">' + esc(t.author) + '</b><br>' + fmtBody(t.body.slice(0, 90)) + '</div>';
+        q = '<div class="quote" data-target="' + t.id + '" title="رفتن به پیام اصلی"><b class="' + authorClass(t.author) + '">' + esc(t.author) + '</b><br>' + fmtBody(t.body.slice(0, 90)) + '</div>';
       }
       const isMine = m.author === (nameEl.value.trim() || 'مهدی');
       const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
@@ -201,11 +209,31 @@ async function load(){
       replybar.style.display = 'flex';
       draftEl.focus();
     }
+    function showToast(msg){
+      const t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(showToast._h);
+      showToast._h = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+    function jumpTo(id){
+      const row = msgsEl.querySelector('.row[data-id="' + id + '"]');
+      if (!row) { showToast('پیام اصلی در فهرست فعلی نیست'); return; }
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.classList.remove('flash');
+      void row.offsetWidth;
+      row.classList.add('flash');
+      setTimeout(() => row.classList.remove('flash'), 1900);
+    }
     msgsEl.querySelectorAll('.row').forEach(el => {
       el.addEventListener('click', () => { const m = byId[el.dataset.id]; if (m) setReply(m); });
     });
     msgsEl.querySelectorAll('.rbtn').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); const m = byId[btn.dataset.reply]; if (m) setReply(m); });
+    });
+    msgsEl.querySelectorAll('.quote[data-target]').forEach(el => {
+      el.addEventListener('click', e => { e.stopPropagation(); jumpTo(el.dataset.target); });
     });
     if (nearBottom || lastCount <= rows.length) msgsEl.scrollTop = msgsEl.scrollHeight;
   } catch(e) { /* silent retry next tick */ }
