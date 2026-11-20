@@ -224,99 +224,152 @@ function fmtTime(iso){
   catch(e){ return iso; }
 }
 
+// ===== Room messages (incremental loading: only new rows are fetched
+// and appended; the list is never rebuilt when nothing changed) =====
+let roomRows = [];
+let roomIds = new Set();
+let roomLastTs = '';
+let roomFull = true;
+let roomRendered = false;
+let roomPollN = 0;
+function invalidateRoom(){ roomFull = true; }
+function dayKeyOf(iso){ return new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(new Date(iso)); }
+function dayLabelOf(iso){
+  const k = dayKeyOf(iso);
+  if (k === dayKeyOf(new Date().toISOString())) return 'امروز';
+  if (k === dayKeyOf(new Date(Date.now() - 86400000).toISOString())) return 'دیروز';
+  return new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso));
+}
+function roomRowHtml(m, prev){
+  let q = '';
+  if (m.reply_to && byId[m.reply_to]) {
+    const t = byId[m.reply_to];
+    q = '<div class="quote" data-target="' + t.id + '" title="رفتن به پیام اصلی"><b class="' + authorClass(t.author) + '">' + esc(t.author) + '</b><br>' + fmtBody(quoteText(t)) + '</div>';
+  }
+  const isMine = m.author === (nameEl.value.trim() || 'مهدی');
+  const newDay = !prev || dayKeyOf(prev.created_at) !== dayKeyOf(m.created_at);
+  let html = '';
+  if (newDay) html += '<div class="daysep"><span>' + dayLabelOf(m.created_at) + '</span></div>';
+  const grouped = !newDay && !!prev && prev.author === m.author && (new Date(m.created_at) - new Date(prev.created_at) < 7 * 60000);
+  const ava = isMine ? '' : (grouped ? '<div class="ava sp"></div>' : '<div class="ava ' + avClass(m.author) + '">' + esc(m.author.trim().charAt(0)) + '</div>');
+  const aname = (isMine || grouped) ? '' : '<div class="aname ' + authorClass(m.author) + '">' + esc(m.author) + '</div>';
+  const photo = m.image_url ? '<img class="photo" src="' + escAttr(m.image_url) + '" data-full="' + escAttr(m.image_url) + '" alt="عکس" loading="lazy">' : '';
+  const bodyHtml = (m.body || '').trim() ? '<div class="body">' + fmtBody(m.body) + '</div>' : '';
+  html += '<div class="row' + (isMine ? ' mine' : '') + (grouped ? ' grp' : '') + '" data-id="' + m.id + '">' + ava +
+    '<div class="bub">' + aname + q + photo + bodyHtml +
+    '<div class="meta"><span class="time">' + fmtClock(m.created_at) + '</span>' +
+    '<button class="rbtn" type="button" data-reply="' + m.id + '">پاسخ</button></div>' +
+    '</div></div>';
+  return html;
+}
+function setReply(m){
+  replyTo = m.id;
+  replywho.textContent = m.author;
+  replytext.textContent = quoteText(m);
+  replybar.style.display = 'flex';
+  draftEl.focus();
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._h);
+  showToast._h = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function jumpTo(id){
+  const row = msgsEl.querySelector('.row[data-id="' + id + '"]');
+  if (!row) { showToast('پیام اصلی در فهرست فعلی نیست'); return; }
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  row.classList.remove('flash');
+  void row.offsetWidth;
+  row.classList.add('flash');
+  setTimeout(() => row.classList.remove('flash'), 1900);
+}
+msgsEl.addEventListener('click', e => {
+  if (view !== 'room') return;
+  const photo = e.target.closest('.photo');
+  if (photo) { e.stopPropagation(); openLightbox(photo.dataset.full || photo.src); return; }
+  const quote = e.target.closest('.quote[data-target]');
+  if (quote) { e.stopPropagation(); jumpTo(quote.dataset.target); return; }
+  const btn = e.target.closest('.rbtn[data-reply]');
+  if (btn) { e.stopPropagation(); const m = byId[btn.dataset.reply]; if (m) setReply(m); return; }
+  const row = e.target.closest('.row');
+  if (row) { const m = byId[row.dataset.id]; if (m) setReply(m); }
+});
+function updateRoomSub(){
+  const subEl = document.getElementById('roomsub');
+  if (subEl && roomRows.length) {
+    const members = new Set(roomRows.map(m => m.author)).size;
+    subEl.textContent = members + ' عضو • آخرین فعالیت ' + fmtClock(roomRows[roomRows.length - 1].created_at);
+  }
+}
+function renderRoomFull(){
+  let html = '';
+  let prev = null;
+  roomRows.forEach(m => { html += roomRowHtml(m, prev); prev = m; });
+  msgsEl.innerHTML = html || '<div class="empty">هنوز پیامی نیست؛ اولین نفر باش که بحث را شروع می‌کند.</div>';
+  roomRendered = true;
+  updateRoomSub();
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+  const pill = document.getElementById('newpill');
+  if (pill) pill.style.display = 'none';
+}
 async function load(){
   if (view !== 'room') return;
   try {
-    const r = await fetch(API + "?select=*&order=created_at.asc&limit=500", { headers: HEADERS });
+    roomPollN++;
+    if (roomFull) {
+      const r = await fetch(API + "?select=*&order=created_at.desc&limit=500", { headers: HEADERS });
+      if (!r.ok) return;
+      const rows = (await r.json()).reverse();
+      roomRows = rows;
+      roomIds = new Set(rows.map(m => m.id));
+      byId = {};
+      rows.forEach(m => byId[m.id] = m);
+      roomLastTs = rows.length ? rows[rows.length - 1].created_at : '';
+      roomFull = false;
+      renderRoomFull();
+      return;
+    }
+    if (roomPollN % 20 === 0) {
+      const r = await fetch(API + "?select=id&order=created_at.desc&limit=500", { headers: HEADERS });
+      if (r.ok) {
+        const ids = new Set((await r.json()).map(m => m.id));
+        let stale = ids.size !== roomIds.size;
+        if (!stale) for (const id of roomIds) { if (!ids.has(id)) { stale = true; break; } }
+        if (stale) { invalidateRoom(); return load(); }
+      }
+    }
+    if (!roomLastTs) { invalidateRoom(); return load(); }
+    const r = await fetch(API + "?select=*&order=created_at.asc&created_at=gte." + encodeURIComponent(roomLastTs), { headers: HEADERS });
     if (!r.ok) return;
     const rows = await r.json();
-    const prevCount = lastCount;
-    const newCount = prevCount >= 0 ? Math.max(0, rows.length - prevCount) : 0;
-    if (rows.length === lastCount) return;
-    lastCount = rows.length;
-    byId = {};
-    rows.forEach(m => byId[m.id] = m);
+    const fresh = rows.filter(m => !roomIds.has(m.id));
+    if (!roomRendered) {
+      fresh.forEach(m => { roomIds.add(m.id); byId[m.id] = m; roomRows.push(m); });
+      if (fresh.length) roomLastTs = fresh[fresh.length - 1].created_at;
+      renderRoomFull();
+      return;
+    }
+    if (!fresh.length) return;
     const nearBottom = msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight < 160;
-    const subEl = document.getElementById('roomsub');
-    if (subEl && rows.length) {
-      const members = new Set(rows.map(m => m.author)).size;
-      subEl.textContent = members + ' عضو • آخرین فعالیت ' + fmtClock(rows[rows.length - 1].created_at);
-    }
-        const dayKey = (iso) => new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(new Date(iso));
-    const todayKey = dayKey(new Date().toISOString());
-    const yKey = dayKey(new Date(Date.now() - 86400000).toISOString());
-    function dayLabel(iso){
-      const k = dayKey(iso);
-      if (k === todayKey) return 'امروز';
-      if (k === yKey) return 'دیروز';
-      return new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso));
-    }
+    fresh.forEach(m => { roomIds.add(m.id); byId[m.id] = m; });
     let html = '';
-    let prev = null;
-    rows.forEach(m => {
-      let q = '';
-      if (m.reply_to && byId[m.reply_to]) {
-        const t = byId[m.reply_to];
-        q = '<div class="quote" data-target="' + t.id + '" title="رفتن به پیام اصلی"><b class="' + authorClass(t.author) + '">' + esc(t.author) + '</b><br>' + fmtBody(quoteText(t)) + '</div>';
-      }
-      const isMine = m.author === (nameEl.value.trim() || 'مهدی');
-      const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
-      if (newDay) html += '<div class="daysep"><span>' + dayLabel(m.created_at) + '</span></div>';
-      const grouped = !newDay && !!prev && prev.author === m.author && (new Date(m.created_at) - new Date(prev.created_at) < 7 * 60000);
-      const ava = isMine ? '' : (grouped ? '<div class="ava sp"></div>' : '<div class="ava ' + avClass(m.author) + '">' + esc(m.author.trim().charAt(0)) + '</div>');
-      const aname = (isMine || grouped) ? '' : '<div class="aname ' + authorClass(m.author) + '">' + esc(m.author) + '</div>';
-      const photo = m.image_url ? '<img class="photo" src="' + escAttr(m.image_url) + '" data-full="' + escAttr(m.image_url) + '" alt="عکس" loading="lazy">' : '';
-      const bodyHtml = (m.body || '').trim() ? '<div class="body">' + fmtBody(m.body) + '</div>' : '';
-      html += '<div class="row' + (isMine ? ' mine' : '') + (grouped ? ' grp' : '') + '" data-id="' + m.id + '">' + ava +
-        '<div class="bub">' + aname + q + photo + bodyHtml +
-        '<div class="meta"><span class="time">' + fmtClock(m.created_at) + '</span>' +
-        '<button class="rbtn" type="button" data-reply="' + m.id + '">پاسخ</button></div>' +
-        '</div></div>';
-      prev = m;
-    });
-    msgsEl.innerHTML = html || '<div class="empty">هنوز پیامی نیست؛ اولین نفر باش که بحث را شروع می‌کند.</div>';
-    function setReply(m){
-      replyTo = m.id;
-      replywho.textContent = m.author;
-      replytext.textContent = quoteText(m);
-      replybar.style.display = 'flex';
-      draftEl.focus();
-    }
-    function showToast(msg){
-      const t = document.getElementById('toast');
-      if (!t) return;
-      t.textContent = msg;
-      t.classList.add('show');
-      clearTimeout(showToast._h);
-      showToast._h = setTimeout(() => t.classList.remove('show'), 2200);
-    }
-    function jumpTo(id){
-      const row = msgsEl.querySelector('.row[data-id="' + id + '"]');
-      if (!row) { showToast('پیام اصلی در فهرست فعلی نیست'); return; }
-      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      row.classList.remove('flash');
-      void row.offsetWidth;
-      row.classList.add('flash');
-      setTimeout(() => row.classList.remove('flash'), 1900);
-    }
-    msgsEl.querySelectorAll('.row').forEach(el => {
-      el.addEventListener('click', () => { const m = byId[el.dataset.id]; if (m) setReply(m); });
-    });
-    msgsEl.querySelectorAll('.rbtn').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); const m = byId[btn.dataset.reply]; if (m) setReply(m); });
-    });
-    msgsEl.querySelectorAll('.quote[data-target]').forEach(el => {
-      el.addEventListener('click', e => { e.stopPropagation(); jumpTo(el.dataset.target); });
-    });
-    msgsEl.querySelectorAll('.photo').forEach(img => {
-      img.addEventListener('click', e => { e.stopPropagation(); openLightbox(img.dataset.full || img.src); });
-    });
+    let prev = roomRows.length ? roomRows[roomRows.length - 1] : null;
+    fresh.forEach(m => { html += roomRowHtml(m, prev); prev = m; });
+    roomRows = roomRows.concat(fresh);
+    roomLastTs = fresh[fresh.length - 1].created_at;
+    const emptyEl = msgsEl.querySelector('.empty');
+    if (emptyEl) emptyEl.remove();
+    msgsEl.insertAdjacentHTML('beforeend', html);
+    updateRoomSub();
     const pill = document.getElementById('newpill');
     if (nearBottom) {
       msgsEl.scrollTop = msgsEl.scrollHeight;
       if (pill) pill.style.display = 'none';
-    } else if (newCount > 0 && pill) {
-      pill.textContent = newCount + ' پیام جدید ↓';
+    } else if (pill) {
+      pill.textContent = fresh.length + ' پیام جدید ↓';
       pill.style.display = 'block';
     }
   } catch(e) { /* silent retry next tick */ }
@@ -426,7 +479,6 @@ async function send(){
       draftEl.style.height = 'auto';
       clearPhoto();
       replyTo = null; replybar.style.display = 'none';
-      lastCount = -1;
       await load();
       msgsEl.scrollTop = msgsEl.scrollHeight;
     } else {
@@ -488,7 +540,7 @@ function setTabs(){
   const att = document.getElementById('attach'); if (att) att.style.display = view === 'dm' ? 'none' : '';
   draftEl.placeholder = (view === 'dm' && partner) ? ('پیام خصوصی به ' + partner + '…') : (view === 'dm' ? 'اول یک عضو را از فهرست انتخاب کنید…' : 'پیامتان را بنویسید…');
 }
-tabRoom.addEventListener('click', () => { view = 'room'; partner = null; replyToDM = null; replybar.style.display = 'none'; setTabs(); lastCount = -1; load(); });
+tabRoom.addEventListener('click', () => { view = 'room'; partner = null; replyToDM = null; replybar.style.display = 'none'; setTabs(); load(); });
 tabDM.addEventListener('click', () => { view = 'dm'; partner = null; replyTo = null; replybar.style.display = 'none'; setTabs(); lastDMSig = ''; loadDM(); });
 dmBack.addEventListener('click', () => { partner = null; replyToDM = null; replybar.style.display = 'none'; setTabs(); lastDMSig = ''; loadDM(); });
 
@@ -502,25 +554,65 @@ function dmUnread(rows, me){
 }
 function paintDMBadge(total){ const b = document.getElementById('dmTabBadge'); if (!b) return; if (total > 0) { b.textContent = total; b.style.display = 'inline-block'; } else { b.style.display = 'none'; } }
 
+let dmRows = [];
+let dmIds = new Set();
+let dmLastTs = '';
+let dmFull = true;
+let dmMe = '';
+let dmPollN = 0;
+function invalidateDM(){ dmFull = true; }
 async function loadDM(){
   try {
     const me = meName();
-    const q = API_DM + "?select=*&order=created_at.asc&limit=1000&or=" + encodeURIComponent("(sender.eq." + me + ",recipient.eq." + me + ")");
-    const r = await fetch(q, { headers: HEADERS });
-    if (!r.ok) return;
-    const rows = await r.json();
-    paintDMBadge(dmUnread(rows, me).total);
+    if (me !== dmMe) { dmMe = me; dmFull = true; }
+    dmPollN++;
+    let changed = false;
+    const orFilter = encodeURIComponent("(sender.eq." + me + ",recipient.eq." + me + ")");
+    if (dmFull) {
+      const q = API_DM + "?select=*&order=created_at.asc&limit=1000&or=" + orFilter;
+      const r = await fetch(q, { headers: HEADERS });
+      if (!r.ok) return;
+      dmRows = await r.json();
+      dmIds = new Set(dmRows.map(m => m.id));
+      dmLastTs = dmRows.length ? dmRows[dmRows.length - 1].created_at : '';
+      dmFull = false;
+      changed = true;
+    } else {
+      if (dmPollN % 20 === 0) {
+        const q = API_DM + "?select=id&or=" + orFilter;
+        const r = await fetch(q, { headers: HEADERS });
+        if (r.ok) {
+          const ids = new Set((await r.json()).map(m => m.id));
+          let stale = ids.size !== dmIds.size;
+          if (!stale) for (const id of dmIds) { if (!ids.has(id)) { stale = true; break; } }
+          if (stale) { invalidateDM(); return loadDM(); }
+        }
+      }
+      if (!dmLastTs) { invalidateDM(); return loadDM(); }
+      const q = API_DM + "?select=*&order=created_at.asc&created_at=gte." + encodeURIComponent(dmLastTs) + "&or=" + orFilter;
+      const r = await fetch(q, { headers: HEADERS });
+      if (!r.ok) return;
+      const rows = await r.json();
+      const fresh = rows.filter(m => !dmIds.has(m.id));
+      if (fresh.length) {
+        fresh.forEach(m => { dmIds.add(m.id); dmRows.push(m); });
+        dmLastTs = fresh[fresh.length - 1].created_at;
+        changed = true;
+      }
+    }
+    paintDMBadge(dmUnread(dmRows, me).total);
     if (view !== 'dm') return;
-    const sig = rows.length + ':' + (rows.length ? rows[rows.length - 1].id + ':' + rows[rows.length - 1].body.length : '') + ':' + JSON.stringify(dmReadMap());
-    if (sig === lastDMSig) return;
+    const sig = dmRows.length + ':' + (dmRows.length ? dmRows[dmRows.length - 1].id + ':' + dmRows[dmRows.length - 1].body.length : '') + ':' + (partner || '') + ':' + JSON.stringify(dmReadMap());
+    if (!changed && sig === lastDMSig) return;
     lastDMSig = sig;
     byIdDM = {};
-    rows.forEach(m => byIdDM[m.id] = m);
-    if (partner) renderDMConv(rows, me); else renderDMList(rows, me);
+    dmRows.forEach(m => byIdDM[m.id] = m);
+    if (partner) renderDMConv(dmRows, me); else renderDMList(dmRows, me);
   } catch(e) {}
 }
 
 function renderDMList(rows, me){
+  roomRendered = false;
   const names = MEMBERS.slice();
   rows.forEach(m => { const o = m.sender === me ? m.recipient : m.sender; if (!names.includes(o)) names.push(o); });
   const un = dmUnread(rows, me).per;
@@ -551,6 +643,7 @@ function renderDMList(rows, me){
 }
 
 function renderDMConv(rows, me){
+  roomRendered = false;
   const conv = rows.filter(m => (m.sender === me && m.recipient === partner) || (m.sender === partner && m.recipient === me));
   const nearBottom = msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight < 160;
   const dayKey = (iso) => new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(new Date(iso));
@@ -585,6 +678,7 @@ function renderDMConv(rows, me){
     btn.addEventListener('click', async e => { e.stopPropagation();
       const id = btn.dataset.deldm;
       try { await fetch(API_DM + "?id=eq." + id, { method: 'DELETE', headers: HEADERS }); } catch(err) {}
+      dmRows = dmRows.filter(x => x.id !== id); dmIds.delete(id);
       lastDMSig = ''; loadDM(); });
   });
   msgsEl.querySelectorAll('.quote[data-target]').forEach(el => {
