@@ -91,6 +91,10 @@
   .member .minfo{min-width:0;flex:1}
   .member .mname{font-weight:700;font-size:14.5px}
   .member .mlast{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+  .member .mtime{color:var(--muted);font-size:11px;flex:none}
+  .member.unread .mlast{color:var(--text);font-weight:700}
+  .ubadge{background:#e5484d;color:#fff;border-radius:999px;min-width:20px;height:20px;line-height:20px;text-align:center;font-size:11.5px;padding:0 6px;flex:none;display:inline-block}
+  #dmTabBadge{margin-inline-start:6px}
   .dmnote{color:var(--muted);font-size:12.5px;line-height:2;padding:14px 12px 6px;text-align:center}
   footer .attach{width:46px;height:46px;flex:none;border-radius:50%;background:var(--panel2);border:1px solid #22344a;color:#cfe1f5;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:.15s;box-shadow:none}
   footer .attach:hover{border-color:var(--accent);color:#fff}
@@ -127,7 +131,7 @@
 
 <div id="tabs">
   <button id="tabRoom" class="tab active" type="button">اتاق اصلی</button>
-  <button id="tabDM" class="tab" type="button">گفت‌وگوی خصوصی</button>
+  <button id="tabDM" class="tab" type="button">گفت‌وگوی خصوصی<span id="dmTabBadge" class="ubadge" style="display:none"></span></button>
   <button id="dmBack" type="button">بازگشت به فهرست اعضا</button>
 </div>
 
@@ -488,15 +492,26 @@ tabRoom.addEventListener('click', () => { view = 'room'; partner = null; replyTo
 tabDM.addEventListener('click', () => { view = 'dm'; partner = null; replyTo = null; replybar.style.display = 'none'; setTabs(); lastDMSig = ''; loadDM(); });
 dmBack.addEventListener('click', () => { partner = null; replyToDM = null; replybar.style.display = 'none'; setTabs(); lastDMSig = ''; loadDM(); });
 
+const DMREAD_KEY = 'council_dm_read_v1';
+function dmReadMap(){ try { return JSON.parse(localStorage.getItem(DMREAD_KEY) || '{}'); } catch(e) { return {}; } }
+function dmMarkRead(p, iso){ const map = dmReadMap(); map[meName() + '|' + p] = iso; try { localStorage.setItem(DMREAD_KEY, JSON.stringify(map)); } catch(e) {} }
+function dmUnread(rows, me){
+  const map = dmReadMap(); const per = {}; let total = 0;
+  rows.forEach(m => { if (m.recipient === me && m.sender !== me) { const since = map[me + '|' + m.sender] || ''; if (m.created_at > since) { per[m.sender] = (per[m.sender] || 0) + 1; total++; } } });
+  return { per, total };
+}
+function paintDMBadge(total){ const b = document.getElementById('dmTabBadge'); if (!b) return; if (total > 0) { b.textContent = total; b.style.display = 'inline-block'; } else { b.style.display = 'none'; } }
+
 async function loadDM(){
-  if (view !== 'dm') return;
   try {
     const me = meName();
     const q = API_DM + "?select=*&order=created_at.asc&limit=1000&or=" + encodeURIComponent("(sender.eq." + me + ",recipient.eq." + me + ")");
     const r = await fetch(q, { headers: HEADERS });
     if (!r.ok) return;
     const rows = await r.json();
-    const sig = rows.length + ':' + (rows.length ? rows[rows.length - 1].id + ':' + rows[rows.length - 1].body.length : '');
+    paintDMBadge(dmUnread(rows, me).total);
+    if (view !== 'dm') return;
+    const sig = rows.length + ':' + (rows.length ? rows[rows.length - 1].id + ':' + rows[rows.length - 1].body.length : '') + ':' + JSON.stringify(dmReadMap());
     if (sig === lastDMSig) return;
     lastDMSig = sig;
     byIdDM = {};
@@ -508,13 +523,25 @@ async function loadDM(){
 function renderDMList(rows, me){
   const names = MEMBERS.slice();
   rows.forEach(m => { const o = m.sender === me ? m.recipient : m.sender; if (!names.includes(o)) names.push(o); });
-  let html = '<div class="dmnote">گفت‌وگوی خصوصی فقط میان شما و طرف مقابل نمایش داده می‌شود.<br>تصمیم‌ها، رأی‌گیری‌ها و مصوبات همچنان در اتاق اصلی ثبت می‌ماند.</div>';
-  names.filter(n => n !== me).forEach(n => {
+  const un = dmUnread(rows, me).per;
+  const entries = names.filter(n => n !== me).map(n => {
     const conv = rows.filter(m => (m.sender === me && m.recipient === n) || (m.sender === n && m.recipient === me));
-    const last = conv.length ? conv[conv.length - 1] : null;
-    html += '<div class="member" data-partner="' + esc(n) + '"><div class="ava ' + avClass(n) + '">' + esc(n.trim().charAt(0)) + '</div>' +
+    return { n, last: conv.length ? conv[conv.length - 1] : null, unread: un[n] || 0 };
+  });
+  entries.sort((a, b) => {
+    if (a.last && b.last) return a.last.created_at < b.last.created_at ? 1 : -1;
+    if (a.last) return -1;
+    if (b.last) return 1;
+    return 0;
+  });
+  let html = '<div class="dmnote">گفت‌وگوی خصوصی فقط میان شما و طرف مقابل نمایش داده می‌شود.<br>تصمیم‌ها، رأی‌گیری‌ها و مصوبات همچنان در اتاق اصلی ثبت می‌ماند.</div>';
+  entries.forEach(e => {
+    const n = e.n; const last = e.last;
+    html += '<div class="member' + (e.unread ? ' unread' : '') + '" data-partner="' + esc(n) + '"><div class="ava ' + avClass(n) + '">' + esc(n.trim().charAt(0)) + '</div>' +
       '<div class="minfo"><div class="mname ' + authorClass(n) + '">' + esc(n) + '</div>' +
-      '<div class="mlast">' + (last ? esc((last.sender === me ? 'شما: ' : '') + last.body.slice(0, 60)) : 'هنوز گفت‌وگویی نیست') + '</div></div></div>';
+      '<div class="mlast">' + (last ? esc((last.sender === me ? 'شما: ' : '') + last.body.slice(0, 60)) : 'هنوز گفت‌وگویی نیست') + '</div></div>' +
+      (last ? '<div class="mtime">' + fmtClock(last.created_at) + '</div>' : '') +
+      (e.unread ? '<span class="ubadge">' + e.unread + '</span>' : '') + '</div>';
   });
   msgsEl.innerHTML = html;
   msgsEl.querySelectorAll('.member').forEach(el => {
@@ -568,6 +595,8 @@ function renderDMConv(rows, me){
       row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash');
       setTimeout(() => row.classList.remove('flash'), 1900); });
   });
+  const lastIn = conv.filter(m => m.sender === partner).pop();
+  if (lastIn) { dmMarkRead(partner, lastIn.created_at); paintDMBadge(dmUnread(rows, me).total); }
   if (nearBottom) msgsEl.scrollTop = msgsEl.scrollHeight;
 }
 
@@ -590,7 +619,8 @@ async function sendDM(){
 
 setTabs();
 load();
-setInterval(() => { if (view === 'room') load(); else loadDM(); }, 3000);
+loadDM();
+setInterval(() => { if (view === 'room') load(); loadDM(); }, 3000);
 </script>
 <script>
 if ('serviceWorker' in navigator) {
