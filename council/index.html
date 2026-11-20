@@ -82,6 +82,16 @@
   #fab{position:fixed;left:16px;bottom:96px;width:42px;height:42px;border-radius:50%;background:#1c2a3a;border:1px solid #2a3f55;color:#cfe1f5;display:none;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.45);cursor:pointer;z-index:5;padding:0}
   #fab svg{width:22px;height:22px;fill:currentColor}
   .hint{padding:5px 14px 8px;font-size:11px;color:var(--muted);background:var(--panel)}
+  #tabs{display:flex;gap:8px;align-items:center;background:var(--panel);padding:8px 12px 2px}
+  .tab{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:6px 16px;font-family:inherit;font-size:13px;cursor:pointer}
+  .tab.active{background:linear-gradient(135deg,#5b97ff,#2f6fe4);color:#fff;border-color:transparent}
+  #dmBack{display:none;background:none;border:none;color:var(--accent);font-family:inherit;font-size:13px;cursor:pointer;padding:6px 4px}
+  .member{display:flex;align-items:center;gap:11px;padding:12px 10px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;border-radius:12px}
+  .member:hover{background:rgba(255,255,255,.04)}
+  .member .minfo{min-width:0;flex:1}
+  .member .mname{font-weight:700;font-size:14.5px}
+  .member .mlast{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+  .dmnote{color:var(--muted);font-size:12.5px;line-height:2;padding:14px 12px 6px;text-align:center}
   footer .attach{width:46px;height:46px;flex:none;border-radius:50%;background:var(--panel2);border:1px solid #22344a;color:#cfe1f5;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:.15s;box-shadow:none}
   footer .attach:hover{border-color:var(--accent);color:#fff}
   footer .attach svg{width:21px;height:21px;fill:currentColor;transform:none}
@@ -114,6 +124,12 @@
   <label>نام شما:</label>
   <input id="myname" value="مهدی">
 </header>
+
+<div id="tabs">
+  <button id="tabRoom" class="tab active" type="button">اتاق اصلی</button>
+  <button id="tabDM" class="tab" type="button">گفت‌وگوی خصوصی</button>
+  <button id="dmBack" type="button">بازگشت به فهرست اعضا</button>
+</div>
 
 <div id="msgs"></div>
 
@@ -205,6 +221,7 @@ function fmtTime(iso){
 }
 
 async function load(){
+  if (view !== 'room') return;
   try {
     const r = await fetch(API + "?select=*&order=created_at.asc&limit=500", { headers: HEADERS });
     if (!r.ok) return;
@@ -302,7 +319,7 @@ async function load(){
 }
 
 document.getElementById('replycancel').addEventListener('click', () => {
-  replyTo = null; replybar.style.display = 'none';
+  replyTo = null; replyToDM = null; replybar.style.display = 'none';
 });
 
 function showToastGlobal(msg){
@@ -386,6 +403,7 @@ function uploadPhoto(file){
   });
 }
 async function send(){
+  if (view === 'dm') { return sendDM(); }
   const body = draftEl.value.trim();
   if (!body && !selectedFile) return;
   if (uploading) return;
@@ -445,8 +463,134 @@ document.getElementById('lbclose').addEventListener('click', closeLightbox);
 document.getElementById('lightbox').addEventListener('click', e => { if (e.target.id === 'lightbox') closeLightbox(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
+
+// ===== Private 1-to-1 conversations =====
+const API_DM = SUPABASE_URL + "/rest/v1/council_private_messages";
+const MEMBERS = ['مهدی','مدیرعامل','ربات SGM','Wally','Grok','Manus','مانی','همراه','Cooper'];
+let view = 'room';
+let partner = null;
+let byIdDM = {};
+let lastDMSig = '';
+let replyToDM = null;
+const tabRoom = document.getElementById('tabRoom');
+const tabDM = document.getElementById('tabDM');
+const dmBack = document.getElementById('dmBack');
+
+function meName(){ return nameEl.value.trim() || 'مهدی'; }
+function setTabs(){
+  tabRoom.classList.toggle('active', view === 'room');
+  tabDM.classList.toggle('active', view === 'dm');
+  dmBack.style.display = (view === 'dm' && partner) ? 'inline-block' : 'none';
+  const att = document.getElementById('attach'); if (att) att.style.display = view === 'dm' ? 'none' : '';
+  draftEl.placeholder = (view === 'dm' && partner) ? ('پیام خصوصی به ' + partner + '…') : (view === 'dm' ? 'اول یک عضو را از فهرست انتخاب کنید…' : 'پیامتان را بنویسید…');
+}
+tabRoom.addEventListener('click', () => { view = 'room'; partner = null; replyToDM = null; replybar.style.display = 'none'; setTabs(); lastCount = -1; load(); });
+tabDM.addEventListener('click', () => { view = 'dm'; partner = null; replyTo = null; replybar.style.display = 'none'; setTabs(); lastDMSig = ''; loadDM(); });
+dmBack.addEventListener('click', () => { partner = null; replyToDM = null; replybar.style.display = 'none'; setTabs(); lastDMSig = ''; loadDM(); });
+
+async function loadDM(){
+  if (view !== 'dm') return;
+  try {
+    const me = meName();
+    const q = API_DM + "?select=*&order=created_at.asc&limit=1000&or=" + encodeURIComponent("(sender.eq." + me + ",recipient.eq." + me + ")");
+    const r = await fetch(q, { headers: HEADERS });
+    if (!r.ok) return;
+    const rows = await r.json();
+    const sig = rows.length + ':' + (rows.length ? rows[rows.length - 1].id + ':' + rows[rows.length - 1].body.length : '');
+    if (sig === lastDMSig) return;
+    lastDMSig = sig;
+    byIdDM = {};
+    rows.forEach(m => byIdDM[m.id] = m);
+    if (partner) renderDMConv(rows, me); else renderDMList(rows, me);
+  } catch(e) {}
+}
+
+function renderDMList(rows, me){
+  const names = MEMBERS.slice();
+  rows.forEach(m => { const o = m.sender === me ? m.recipient : m.sender; if (!names.includes(o)) names.push(o); });
+  let html = '<div class="dmnote">گفت‌وگوی خصوصی فقط میان شما و طرف مقابل نمایش داده می‌شود.<br>تصمیم‌ها، رأی‌گیری‌ها و مصوبات همچنان در اتاق اصلی ثبت می‌ماند.</div>';
+  names.filter(n => n !== me).forEach(n => {
+    const conv = rows.filter(m => (m.sender === me && m.recipient === n) || (m.sender === n && m.recipient === me));
+    const last = conv.length ? conv[conv.length - 1] : null;
+    html += '<div class="member" data-partner="' + esc(n) + '"><div class="ava ' + avClass(n) + '">' + esc(n.trim().charAt(0)) + '</div>' +
+      '<div class="minfo"><div class="mname ' + authorClass(n) + '">' + esc(n) + '</div>' +
+      '<div class="mlast">' + (last ? esc((last.sender === me ? 'شما: ' : '') + last.body.slice(0, 60)) : 'هنوز گفت‌وگویی نیست') + '</div></div></div>';
+  });
+  msgsEl.innerHTML = html;
+  msgsEl.querySelectorAll('.member').forEach(el => {
+    el.addEventListener('click', () => { partner = el.dataset.partner; setTabs(); lastDMSig = ''; loadDM(); });
+  });
+  msgsEl.scrollTop = 0;
+}
+
+function renderDMConv(rows, me){
+  const conv = rows.filter(m => (m.sender === me && m.recipient === partner) || (m.sender === partner && m.recipient === me));
+  const nearBottom = msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight < 160;
+  const dayKey = (iso) => new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(new Date(iso));
+  let html = '';
+  let prev = null;
+  conv.forEach(m => {
+    let q = '';
+    if (m.reply_to && byIdDM[m.reply_to]) {
+      const t = byIdDM[m.reply_to];
+      q = '<div class="quote" data-target="' + t.id + '"><b class="' + authorClass(t.sender) + '">' + esc(t.sender) + '</b><br>' + fmtBody(t.body.slice(0, 90)) + '</div>';
+    }
+    const isMine = m.sender === me;
+    const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
+    if (newDay) html += '<div class="daysep"><span>' + dayKey(m.created_at) + '</span></div>';
+    const ava = isMine ? '' : '<div class="ava ' + avClass(m.sender) + '">' + esc(m.sender.trim().charAt(0)) + '</div>';
+    const aname = isMine ? '' : '<div class="aname ' + authorClass(m.sender) + '">' + esc(m.sender) + '</div>';
+    html += '<div class="row' + (isMine ? ' mine' : '') + '" data-id="' + m.id + '">' + ava +
+      '<div class="bub">' + aname + q +
+      '<div class="body">' + fmtBody(m.body) + '</div>' +
+      '<div class="meta"><span class="time">' + fmtClock(m.created_at) + '</span>' +
+      '<button class="rbtn" type="button" data-replydm="' + m.id + '">پاسخ</button>' +
+      (isMine ? '<button class="rbtn" type="button" data-deldm="' + m.id + '">حذف</button>' : '') +
+      '</div></div></div>';
+    prev = m;
+  });
+  msgsEl.innerHTML = html || '<div class="empty">هنوز پیامی در این گفت‌وگوی خصوصی نیست.</div>';
+  msgsEl.querySelectorAll('.rbtn[data-replydm]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); const m = byIdDM[btn.dataset.replydm]; if (!m) return;
+      replyToDM = m.id; replywho.textContent = m.sender; replytext.textContent = m.body.slice(0, 60); replybar.style.display = 'flex'; draftEl.focus(); });
+  });
+  msgsEl.querySelectorAll('.rbtn[data-deldm]').forEach(btn => {
+    btn.addEventListener('click', async e => { e.stopPropagation();
+      const id = btn.dataset.deldm;
+      try { await fetch(API_DM + "?id=eq." + id, { method: 'DELETE', headers: HEADERS }); } catch(err) {}
+      lastDMSig = ''; loadDM(); });
+  });
+  msgsEl.querySelectorAll('.quote[data-target]').forEach(el => {
+    el.addEventListener('click', e => { e.stopPropagation();
+      const row = msgsEl.querySelector('.row[data-id="' + el.dataset.target + '"]');
+      if (!row) return;
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash');
+      setTimeout(() => row.classList.remove('flash'), 1900); });
+  });
+  if (nearBottom) msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+
+async function sendDM(){
+  if (!partner) return;
+  const body = draftEl.value.trim();
+  if (!body) return;
+  sendBtn.disabled = true;
+  try {
+    const payload = { sender: meName(), recipient: partner, body: body, reply_to: replyToDM };
+    const r = await fetch(API_DM, { method: 'POST', headers: { ...HEADERS, 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) });
+    if (r.ok) {
+      draftEl.value = ''; draftEl.style.height = 'auto';
+      replyToDM = null; replybar.style.display = 'none';
+      lastDMSig = ''; await loadDM();
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+    }
+  } finally { sendBtn.disabled = false; }
+}
+
+setTabs();
 load();
-setInterval(load, 3000);
+setInterval(() => { if (view === 'room') load(); else loadDM(); }, 3000);
 </script>
 <script>
 if ('serviceWorker' in navigator) {
