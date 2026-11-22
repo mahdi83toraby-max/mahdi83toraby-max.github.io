@@ -167,6 +167,7 @@
 </footer>
 <div class="hint">پیام‌ها هر ۳ ثانیه تازه می‌شوند. برای ارسال عکس، روی دکمهٔ گیره بزنید؛ عکس را می‌توانید از گالری یا دوربین انتخاب کنید.</div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 const SUPABASE_URL = "https://ktnixxbkzapziqplrnmo.supabase.co";
 const KEY = "sb_publishable_pD5qO7dvJP7Xik5Aw9xUsw_A6qCeArA";
@@ -714,7 +715,32 @@ async function sendDM(){
 setTabs();
 load();
 loadDM();
-setInterval(() => { if (view === 'room') load(); loadDM(); }, 3000);
+let pollTimer = setInterval(() => { if (view === 'room') load(); loadDM(); }, 3000);
+function startPolling(ms){ clearInterval(pollTimer); pollTimer = setInterval(() => { if (view === 'room') load(); loadDM(); }, ms); }
+function setLiveHint(on){
+  const h = document.querySelector('.hint');
+  if (!h) return;
+  h.textContent = on
+    ? 'پیام‌ها به‌صورت زنده می‌رسند. برای ارسال عکس، روی دکمهٔ گیره بزنید؛ عکس را می‌توانید از گالری یا دوربین انتخاب کنید.'
+    : 'پیام‌ها هر ۳ ثانیه تازه می‌شوند. برای ارسال عکس، روی دکمهٔ گیره بزنید؛ عکس را می‌توانید از گالری یا دوربین انتخاب کنید.';
+}
+function startRealtime(){
+  try {
+    if (!window.supabase || !window.supabase.createClient) return false;
+    const rt = window.supabase.createClient(SUPABASE_URL, KEY);
+    rt.channel('council-live')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'council_messages' }, () => { if (view === 'room') load(); })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'council_messages' }, () => { invalidateRoom(); if (view === 'room') load(); })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'council_private_messages' }, () => { loadDM(); })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'council_private_messages' }, () => { invalidateDM(); loadDM(); })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') { startPolling(30000); setLiveHint(true); }
+        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') { startPolling(3000); setLiveHint(false); }
+      });
+    return true;
+  } catch (e) { return false; }
+}
+startRealtime();
 </script>
 <script>
 if ('serviceWorker' in navigator) {
