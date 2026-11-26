@@ -171,7 +171,7 @@
 
 <footer>
   <button id="attach" class="attach" type="button" aria-label="ارسال فایل"><svg viewBox="0 0 24 24"><path d="M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z"/></svg></button>
-  <input id="fileinput" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z" hidden>
+  <input id="fileinput" type="file" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z" hidden>
   <textarea id="draft" placeholder="پیامتان را بنویسید…"></textarea>
   <button id="send" type="button" aria-label="ارسال"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
 </footer>
@@ -201,6 +201,7 @@ let replyTo = null;
 let byId = {};
 let lastCount = -1;
 let selectedFile = null;
+let pendingFiles = [];
 let selectedKind = null;
 let selectedPreviewUrl = null;
 let uploading = false;
@@ -325,7 +326,8 @@ function roomRowHtml(m, prev){
   html += '<div class="row' + (isMine ? ' mine' : '') + (grouped ? ' grp' : '') + '" data-id="' + m.id + '">' + ava +
     '<div class="bub">' + aname + q + photo + bodyHtml +
     '<div class="meta"><span class="time">' + fmtClock(m.created_at) + '</span>' +
-    '<button class="rbtn" type="button" data-reply="' + m.id + '">پاسخ</button></div>' +
+    '<button class="rbtn" type="button" data-reply="' + m.id + '">پاسخ</button>' +
+    (isMine ? '<button class="rbtn" type="button" data-del="' + m.id + '">حذف</button>' : '') + '</div>' +
     '</div></div>';
   return html;
 }
@@ -335,6 +337,10 @@ function setReply(m){
   replytext.textContent = quoteText(m);
   replybar.style.display = 'flex';
   draftEl.focus();
+}
+async function deleteRoomMsg(id){
+  try { await fetch(API + "?id=eq." + id, { method: 'DELETE', headers: HEADERS }); } catch(e) {}
+  invalidateRoom(); load();
 }
 function showToast(msg){
   const t = document.getElementById('toast');
@@ -361,6 +367,8 @@ msgsEl.addEventListener('click', e => {
   if (quote) { e.stopPropagation(); jumpTo(quote.dataset.target); return; }
   const btn = e.target.closest('.rbtn[data-reply]');
   if (btn) { e.stopPropagation(); const m = byId[btn.dataset.reply]; if (m) setReply(m); return; }
+  const delBtn = e.target.closest('.rbtn[data-del]');
+  if (delBtn) { e.stopPropagation(); deleteRoomMsg(delBtn.dataset.del); return; }
   const row = e.target.closest('.row');
   if (row) { const m = byId[row.dataset.id]; if (m) setReply(m); }
 });
@@ -456,6 +464,7 @@ function showToastGlobal(msg){
 }
 function clearPhoto(){
   selectedFile = null;
+  pendingFiles = [];
   selectedKind = null;
   const pvi = document.getElementById('pvimg'); if (pvi) { pvi.style.display = ''; pvi.removeAttribute('src'); }
   const pvc = document.getElementById('pvicon'); if (pvc) { pvc.style.display = 'none'; pvc.textContent = ''; }
@@ -590,6 +599,15 @@ async function send(){
     if (r.ok) {
       draftEl.value = '';
       draftEl.style.height = 'auto';
+      const extra = pendingFiles.slice(1);
+      for (let i = 0; i < extra.length; i++) {
+        const pv = document.getElementById('pvsize');
+        if (pv) pv.textContent = 'در حال ارسال فایل ' + (i + 2) + ' از ' + pendingFiles.length + '…';
+        try {
+          const a2 = await uploadAny(extra[i]);
+          await fetch(API, { method: 'POST', headers: { ...HEADERS, 'Prefer': 'return=minimal' }, body: JSON.stringify({ author: nameEl.value.trim() || 'مهدی', body: '', image_url: a2 && a2.kind === 'image' ? a2.url : null, reply_to: null, file_url: a2 ? a2.url : null, file_name: extra[i].name || null, file_kind: a2 ? a2.kind : null, file_size: extra[i].size }) });
+        } catch (e) { showToastGlobal('ارسال یکی از فایل‌ها ناموفق بود'); }
+      }
       clearPhoto();
       replyTo = null; replybar.style.display = 'none';
       await load();
@@ -618,7 +636,25 @@ document.getElementById('newpill').addEventListener('click', () => {
   document.getElementById('newpill').style.display = 'none';
 });
 document.getElementById('attach').addEventListener('click', () => document.getElementById('fileinput').click());
-document.getElementById('fileinput').addEventListener('change', e => { onFilePicked(e.target.files && e.target.files[0]); });
+document.getElementById('fileinput').addEventListener('change', e => { onFilesPicked(e.target.files); });
+function onFilesPicked(list){
+  const files = Array.from(list || []);
+  if (!files.length) return;
+  const valid = [];
+  for (const f of files) {
+    const kind = kindOfFile(f);
+    if (kind === 'image' && f.size > MAX_PHOTO) { showToastGlobal('«' + (f.name || 'عکس') + '» بیش از ۵ مگابایت است و کنار گذاشته شد'); continue; }
+    if (kind !== 'image' && f.size > MAX_FILE) { showToastGlobal('«' + (f.name || 'فایل') + '» بیش از ۵۰ مگابایت است و کنار گذاشته شد'); continue; }
+    valid.push(f);
+  }
+  if (!valid.length) return;
+  onFilePicked(valid[0]);
+  pendingFiles = valid;
+  if (valid.length > 1) {
+    document.getElementById('pvname').textContent = valid.length + ' فایل انتخاب شد';
+    document.getElementById('pvsize').textContent = 'اولین: ' + (valid[0].name || 'فایل') + ' — برای ارسال همه، دکمهٔ ارسال را بزنید';
+  }
+}
 document.getElementById('pvcancel').addEventListener('click', clearPhoto);
 function openLightbox(url){
   const lb = document.getElementById('lightbox');
@@ -656,6 +692,7 @@ tabRoom.addEventListener('click', () => { view = 'room'; partner = null; replyTo
 tabDM.addEventListener('click', () => { view = 'dm'; partner = null; replyTo = null; replybar.style.display = 'none'; setTabs(); lastDMSig = ''; loadDM(); });
 dmBack.addEventListener('click', () => { partner = null; replyToDM = null; replybar.style.display = 'none'; setTabs(); lastDMSig = ''; loadDM(); });
 
+let dmConvKey = null;
 const DMREAD_KEY = 'council_dm_read_v1';
 function dmReadMap(){ try { return JSON.parse(localStorage.getItem(DMREAD_KEY) || '{}'); } catch(e) { return {}; } }
 function dmMarkRead(p, iso){ const map = dmReadMap(); map[meName() + '|' + p] = iso; try { localStorage.setItem(DMREAD_KEY, JSON.stringify(map)); } catch(e) {} }
@@ -751,6 +788,7 @@ function renderDMList(rows, me){
   msgsEl.querySelectorAll('.member').forEach(el => {
     el.addEventListener('click', () => { partner = el.dataset.partner; setTabs(); lastDMSig = ''; loadDM(); });
   });
+  dmConvKey = null;
   msgsEl.scrollTop = 0;
 }
 
@@ -804,7 +842,9 @@ function renderDMConv(rows, me){
   });
   const lastIn = conv.filter(m => m.sender === partner).pop();
   if (lastIn) { dmMarkRead(partner, lastIn.created_at); paintDMBadge(dmUnread(rows, me).total); }
-  if (nearBottom) msgsEl.scrollTop = msgsEl.scrollHeight;
+  const switched = dmConvKey !== partner;
+  dmConvKey = partner;
+  if (nearBottom || switched) msgsEl.scrollTop = msgsEl.scrollHeight;
 }
 
 async function sendDM(){
@@ -825,6 +865,15 @@ async function sendDM(){
     const r = await fetch(API_DM, { method: 'POST', headers: { ...HEADERS, 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) });
     if (r.ok) {
       draftEl.value = ''; draftEl.style.height = 'auto';
+      const extra = pendingFiles.slice(1);
+      for (let i = 0; i < extra.length; i++) {
+        const pv = document.getElementById('pvsize');
+        if (pv) pv.textContent = 'در حال ارسال فایل ' + (i + 2) + ' از ' + pendingFiles.length + '…';
+        try {
+          const a2 = await uploadAny(extra[i]);
+          await fetch(API_DM, { method: 'POST', headers: { ...HEADERS, 'Prefer': 'return=minimal' }, body: JSON.stringify({ sender: meName(), recipient: partner, body: '', reply_to: null, file_url: a2 ? a2.url : null, file_name: extra[i].name || null, file_kind: a2 ? a2.kind : null, file_size: extra[i].size }) });
+        } catch (e) { showToastGlobal('ارسال یکی از فایل‌ها ناموفق بود'); }
+      }
       clearPhoto();
       replyToDM = null; replybar.style.display = 'none';
       lastDMSig = ''; await loadDM();
