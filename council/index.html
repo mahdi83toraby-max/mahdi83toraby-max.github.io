@@ -381,6 +381,18 @@ function updateRoomSub(){
     subEl.textContent = members + ' عضو • آخرین فعالیت ' + fmtClock(roomRows[roomRows.length - 1].created_at);
   }
 }
+let stickToken = 0;
+function stickToBottom(){
+  const t = ++stickToken;
+  const go = () => { if (t === stickToken) msgsEl.scrollTop = msgsEl.scrollHeight; };
+  go();
+  requestAnimationFrame(go);
+  setTimeout(go, 80);
+  setTimeout(go, 250);
+  setTimeout(go, 600);
+}
+msgsEl.addEventListener('wheel', () => { stickToken++; }, { passive: true });
+msgsEl.addEventListener('touchmove', () => { stickToken++; }, { passive: true });
 function renderRoomFull(){
   let html = '';
   let prev = null;
@@ -389,7 +401,7 @@ function renderRoomFull(){
   roomRendered = true;
   dmDisplayed = false;
   updateRoomSub();
-  msgsEl.scrollTop = msgsEl.scrollHeight;
+  stickToBottom();
   const pill = document.getElementById('newpill');
   if (pill) pill.style.display = 'none';
 }
@@ -858,7 +870,7 @@ function renderDMConv(rows, me){
   if (lastIn) { dmMarkRead(partner, lastIn.created_at); paintDMBadge(dmUnread(rows, me).total); }
   const switched = dmConvKey !== partner;
   dmConvKey = partner;
-  if (nearBottom || switched) msgsEl.scrollTop = msgsEl.scrollHeight;
+  if (nearBottom || switched) stickToBottom();
 }
 
 async function sendDM(){
