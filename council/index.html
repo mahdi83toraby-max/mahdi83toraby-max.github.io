@@ -301,12 +301,14 @@ let roomFull = true;
 let roomRendered = false;
 let roomPollN = 0;
 function invalidateRoom(){ roomFull = true; }
-function dayKeyOf(iso){ return new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(new Date(iso)); }
+const DT_DAY = new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' });
+const DT_LABEL = new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', weekday: 'long', day: 'numeric', month: 'long' });
+function dayKeyOf(iso){ return DT_DAY.format(new Date(iso)); }
 function dayLabelOf(iso){
   const k = dayKeyOf(iso);
   if (k === dayKeyOf(new Date().toISOString())) return 'امروز';
   if (k === dayKeyOf(new Date(Date.now() - 86400000).toISOString())) return 'دیروز';
-  return new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso));
+  return DT_LABEL.format(new Date(iso));
 }
 function roomRowHtml(m, prev){
   let q = '';
@@ -385,6 +387,7 @@ function renderRoomFull(){
   roomRows.forEach(m => { html += roomRowHtml(m, prev); prev = m; });
   msgsEl.innerHTML = html || '<div class="empty">هنوز پیامی نیست؛ اولین نفر باش که بحث را شروع می‌کند.</div>';
   roomRendered = true;
+  dmDisplayed = false;
   updateRoomSub();
   msgsEl.scrollTop = msgsEl.scrollHeight;
   const pill = document.getElementById('newpill');
@@ -676,6 +679,15 @@ let view = 'room';
 let partner = null;
 let byIdDM = {};
 let lastDMSig = '';
+let dmDisplayed = false;
+function paintDMFromCache(){
+  const me = meName();
+  byIdDM = {};
+  dmRows.forEach(m => byIdDM[m.id] = m);
+  dmConvKey = null;
+  if (partner) renderDMConv(dmRows, me); else renderDMList(dmRows, me);
+  lastDMSig = dmRows.length + ':' + (dmRows.length ? dmRows[dmRows.length - 1].id + ':' + dmRows[dmRows.length - 1].body.length : '') + ':' + (partner || '') + ':' + JSON.stringify(dmReadMap());
+}
 let replyToDM = null;
 const tabRoom = document.getElementById('tabRoom');
 const tabDM = document.getElementById('tabDM');
@@ -688,9 +700,9 @@ function setTabs(){
   dmBack.style.display = (view === 'dm' && partner) ? 'inline-block' : 'none';
   draftEl.placeholder = (view === 'dm' && partner) ? ('پیام خصوصی به ' + partner + '…') : (view === 'dm' ? 'اول یک عضو را از فهرست انتخاب کنید…' : 'پیامتان را بنویسید…');
 }
-tabRoom.addEventListener('click', () => { view = 'room'; partner = null; replyToDM = null; replybar.style.display = 'none'; setTabs(); load(); });
-tabDM.addEventListener('click', () => { view = 'dm'; partner = null; replyTo = null; replybar.style.display = 'none'; setTabs(); lastDMSig = ''; loadDM(); });
-dmBack.addEventListener('click', () => { partner = null; replyToDM = null; replybar.style.display = 'none'; setTabs(); lastDMSig = ''; loadDM(); });
+tabRoom.addEventListener('click', () => { view = 'room'; partner = null; replyToDM = null; replybar.style.display = 'none'; setTabs(); if (roomRows.length) renderRoomFull(); load(); });
+tabDM.addEventListener('click', () => { view = 'dm'; partner = null; replyTo = null; replybar.style.display = 'none'; setTabs(); paintDMFromCache(); loadDM(); });
+dmBack.addEventListener('click', () => { partner = null; replyToDM = null; replybar.style.display = 'none'; setTabs(); paintDMFromCache(); loadDM(); });
 
 let dmConvKey = null;
 const DMREAD_KEY = 'council_dm_read_v1';
@@ -752,7 +764,7 @@ async function loadDM(){
     paintDMBadge(dmUnread(dmRows, me).total);
     if (view !== 'dm') return;
     const sig = dmRows.length + ':' + (dmRows.length ? dmRows[dmRows.length - 1].id + ':' + dmRows[dmRows.length - 1].body.length : '') + ':' + (partner || '') + ':' + JSON.stringify(dmReadMap());
-    if (!changed && sig === lastDMSig) return;
+    if (!changed && sig === lastDMSig && dmDisplayed) return;
     lastDMSig = sig;
     byIdDM = {};
     dmRows.forEach(m => byIdDM[m.id] = m);
@@ -762,6 +774,7 @@ async function loadDM(){
 
 function renderDMList(rows, me){
   roomRendered = false;
+  dmDisplayed = true;
   const names = MEMBERS.slice();
   rows.forEach(m => { const o = m.sender === me ? m.recipient : m.sender; if (!names.includes(o)) names.push(o); });
   const un = dmUnread(rows, me).per;
@@ -786,7 +799,7 @@ function renderDMList(rows, me){
   });
   msgsEl.innerHTML = html;
   msgsEl.querySelectorAll('.member').forEach(el => {
-    el.addEventListener('click', () => { partner = el.dataset.partner; setTabs(); lastDMSig = ''; loadDM(); });
+    el.addEventListener('click', () => { partner = el.dataset.partner; setTabs(); paintDMFromCache(); loadDM(); });
   });
   dmConvKey = null;
   msgsEl.scrollTop = 0;
@@ -794,9 +807,10 @@ function renderDMList(rows, me){
 
 function renderDMConv(rows, me){
   roomRendered = false;
+  dmDisplayed = true;
   const conv = rows.filter(m => (m.sender === me && m.recipient === partner) || (m.sender === partner && m.recipient === me));
   const nearBottom = msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight < 160;
-  const dayKey = (iso) => new Intl.DateTimeFormat('fa-IR', { timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric', day: 'numeric' }).format(new Date(iso));
+  const dayKey = dayKeyOf;
   let html = '';
   let prev = null;
   conv.forEach(m => {
