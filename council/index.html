@@ -650,7 +650,6 @@ function setTabs(){
   tabRoom.classList.toggle('active', view === 'room');
   tabDM.classList.toggle('active', view === 'dm');
   dmBack.style.display = (view === 'dm' && partner) ? 'inline-block' : 'none';
-  const att = document.getElementById('attach'); if (att) att.style.display = view === 'dm' ? 'none' : '';
   draftEl.placeholder = (view === 'dm' && partner) ? ('پیام خصوصی به ' + partner + '…') : (view === 'dm' ? 'اول یک عضو را از فهرست انتخاب کنید…' : 'پیامتان را بنویسید…');
 }
 tabRoom.addEventListener('click', () => { view = 'room'; partner = null; replyToDM = null; replybar.style.display = 'none'; setTabs(); load(); });
