@@ -48,6 +48,8 @@
   .row.grp{margin-top:2px}
   .row.mine{align-self:flex-end}
   .ava{width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .ava.hasimg{overflow:hidden;padding:0}
+  .ava.hasimg img{width:100%;height:100%;object-fit:cover;display:block}
   .ava.sp{background:transparent;box-shadow:none}
   .av-mehdi{background:linear-gradient(135deg,#37c37e,#1e8a54)} .av-ceo{background:linear-gradient(135deg,#9a7bff,#683df0)} .av-sgm{background:linear-gradient(135deg,#f6a821,#dd7a06)} .av-other{background:linear-gradient(135deg,#7d8ea3,#52657a)}
   .bub{background:var(--bub);border:1px solid rgba(255,255,255,.045);border-radius:17px 17px 17px 6px;padding:8px 12px 7px;box-shadow:0 2px 7px rgba(0,0,0,.28);min-width:120px}
@@ -175,7 +177,6 @@
   <textarea id="draft" placeholder="پیامتان را بنویسید…"></textarea>
   <button id="send" type="button" aria-label="ارسال"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
 </footer>
-<div class="hint">پیام‌ها هر ۳ ثانیه تازه می‌شوند. برای ارسال عکس، ویدیو یا فایل (PDF، ورد، اکسل و…) روی دکمهٔ گیره بزنید؛ سقف هر فایل ۵۰ مگابایت است.</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -220,6 +221,15 @@ function avClass(a){
   if (a === 'مدیرعامل') return 'av-ceo';
   if (a === 'ربات SGM') return 'av-sgm';
   return 'av-other';
+}
+const AVATARS = {
+  'مدیرعامل': 'https://ktnixxbkzapziqplrnmo.supabase.co/storage/v1/object/public/council-images/avatars/ceo.jpg',
+  'Wally': 'https://ktnixxbkzapziqplrnmo.supabase.co/storage/v1/object/public/council-images/avatars/wally.jpg'
+};
+function avaHtml(name){
+  const u = AVATARS[name];
+  if (u) return '<div class="ava hasimg"><img src="' + u + '" alt=""></div>';
+  return '<div class="ava ' + avClass(name) + '">' + esc(name.trim().charAt(0)) + '</div>';
 }
 function fmtClock(iso){
   try { return new Date(iso).toLocaleTimeString('fa-IR', { timeZone:'Asia/Tehran', hour:'2-digit', minute:'2-digit' }); }
@@ -321,7 +331,7 @@ function roomRowHtml(m, prev){
   let html = '';
   if (newDay) html += '<div class="daysep"><span>' + dayLabelOf(m.created_at) + '</span></div>';
   const grouped = !newDay && !!prev && prev.author === m.author && (new Date(m.created_at) - new Date(prev.created_at) < 7 * 60000);
-  const ava = isMine ? '' : (grouped ? '<div class="ava sp"></div>' : '<div class="ava ' + avClass(m.author) + '">' + esc(m.author.trim().charAt(0)) + '</div>');
+  const ava = isMine ? '' : (grouped ? '<div class="ava sp"></div>' : avaHtml(m.author));
   const aname = (isMine || grouped) ? '' : '<div class="aname ' + authorClass(m.author) + '">' + esc(m.author) + '</div>';
   const photo = attachHtml(m);
   const bodyHtml = (m.body || '').trim() ? '<div class="body">' + fmtBody(m.body) + '</div>' : '';
@@ -803,7 +813,7 @@ function renderDMList(rows, me){
   let html = '<div class="dmnote">گفت‌وگوی خصوصی فقط میان شما و طرف مقابل نمایش داده می‌شود.<br>تصمیم‌ها، رأی‌گیری‌ها و مصوبات همچنان در اتاق اصلی ثبت می‌ماند.</div>';
   entries.forEach(e => {
     const n = e.n; const last = e.last;
-    html += '<div class="member' + (e.unread ? ' unread' : '') + '" data-partner="' + esc(n) + '"><div class="ava ' + avClass(n) + '">' + esc(n.trim().charAt(0)) + '</div>' +
+    html += '<div class="member' + (e.unread ? ' unread' : '') + '" data-partner="' + esc(n) + '">' + avaHtml(n) +
       '<div class="minfo"><div class="mname ' + authorClass(n) + '">' + esc(n) + '</div>' +
       '<div class="mlast">' + (last ? esc((last.sender === me ? 'شما: ' : '') + msgLabel(last).slice(0, 60)) : 'هنوز گفت‌وگویی نیست') + '</div></div>' +
       (last ? '<div class="mtime">' + fmtClock(last.created_at) + '</div>' : '') +
@@ -834,7 +844,7 @@ function renderDMConv(rows, me){
     const isMine = m.sender === me;
     const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
     if (newDay) html += '<div class="daysep"><span>' + dayKey(m.created_at) + '</span></div>';
-    const ava = isMine ? '' : '<div class="ava ' + avClass(m.sender) + '">' + esc(m.sender.trim().charAt(0)) + '</div>';
+    const ava = isMine ? '' : avaHtml(m.sender);
     const aname = isMine ? '' : '<div class="aname ' + authorClass(m.sender) + '">' + esc(m.sender) + '</div>';
     const dphoto = attachHtml(m);
     const dbody = (m.body || '').trim() ? '<div class="body">' + fmtBody(m.body) + '</div>' : '';
