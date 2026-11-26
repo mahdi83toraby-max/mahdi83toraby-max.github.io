@@ -34,6 +34,9 @@
   body.ghmode #ghbar{display:block}
   #ghbar input{background:#17130a;border:1px solid #a16207;color:#fff;border-radius:8px;padding:5px 8px;font-size:12px;width:210px;direction:ltr;text-align:left}
   #ghbar button{background:#a16207;color:#fff;border:0;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit}
+  #tokbar{display:none;background:var(--panel);border-bottom:1px solid var(--line);padding:8px 14px;font-size:12.5px;line-height:1.9}
+  #tokbar button{background:#1d4ed8;color:#fff;border:0;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit}
+  #tokBtn{background:none;border:0;font-size:17px;cursor:pointer;padding:2px 4px}
   header .sub{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
   header .sp{flex:1}
   header label{font-size:12px;color:var(--muted)}
@@ -143,8 +146,10 @@
   <span class="sp"></span>
   <label>نام شما:</label>
   <input id="myname" value="مهدی">
+  <button id="tokBtn" type="button" title="توکن اضطراری گیت‌هاب">🔑</button>
 </header>
 <div id="ghbar"><span id="ghstatus"></span><span id="ghtokrow" style="display:none"> <input id="ghtok" type="password" placeholder="GitHub emergency token"> <button id="ghtoksave">ذخیرهٔ توکن</button></span></div>
+<div id="tokbar"><div>🔑 توکن اضطراری گیت‌هاب — یک بار وارد کنید تا روی همین دستگاه بماند؛ فقط روزی لازم می‌شود که سوپابیس قطع باشد.</div><div style="display:flex;gap:6px;margin-top:6px"><input id="ghtokN" type="password" placeholder="github_pat_..." style="flex:1;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:6px 8px;font-size:12px;direction:ltr;text-align:left"><button id="ghtoksaveN" type="button">ذخیرهٔ توکن</button></div><div id="tokState" style="margin-top:4px"></div></div>
 
 <div id="tabs">
   <button id="tabRoom" class="tab active" type="button">اتاق اصلی</button>
@@ -1060,6 +1065,24 @@ document.getElementById('ghtoksave').addEventListener('click', () => {
   updateGhBar();
   ghLoad();
   showToastGlobal('توکن اضطراری ذخیره شد');
+});
+const tokBtnEl = document.getElementById('tokBtn');
+if (tokBtnEl) tokBtnEl.addEventListener('click', () => {
+  const bar = document.getElementById('tokbar');
+  const open = bar.style.display === 'block';
+  bar.style.display = open ? 'none' : 'block';
+  if (!open) document.getElementById('tokState').textContent = ghToken() ? '✅ توکن روی این دستگاه ذخیره شده است؛ برای جایگزینی، توکن تازه را وارد و ذخیره کنید.' : 'هنوز توکنی روی این دستگاه ذخیره نشده است.';
+});
+const ghtoksaveNEl = document.getElementById('ghtoksaveN');
+if (ghtoksaveNEl) ghtoksaveNEl.addEventListener('click', () => {
+  const v = document.getElementById('ghtokN').value.trim();
+  if (!v) { showToastGlobal('اول توکن را وارد کنید'); return; }
+  try { localStorage.setItem('council_gh_token', v); } catch (e) {}
+  document.getElementById('ghtokN').value = '';
+  document.getElementById('tokState').textContent = '✅ توکن ذخیره شد.';
+  updateGhBar();
+  showToastGlobal('توکن اضطراری ذخیره شد');
+  if (ghMode) ghLoad();
 });
 // ناظر سلامت سوپابیس: دو خطای پیاپی = ورود به حالت اضطراری، بازگشت اتصال = خروج خودکار
 setInterval(async () => {
