@@ -114,6 +114,7 @@
   .bub .vid{display:block;max-width:340px;width:100%;border-radius:12px;margin:2px 0 6px;background:#000}
   .bub audio{display:block;width:100%;max-width:340px;margin:2px 0 6px}
   .filecard{display:flex;align-items:center;gap:10px;max-width:340px;background:var(--panel2);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:9px 11px;margin:2px 0 6px;text-decoration:none;color:var(--text)}
+  .fakefile{display:inline-block;background:#451a1a;color:#fca5a5;border:1px dashed #b91c1c;border-radius:8px;padding:1px 7px;font-size:11.5px}
   .filecard .fic{font-size:27px;flex:none;line-height:1}
   .filecard .fmeta{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
   .filecard .fmeta b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -255,7 +256,8 @@ function fmtClock(iso){
   catch(e){ return ''; }
 }
 function fmtBody(s){
-  return esc(s).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+  return esc(s).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/sandbox:\/\/[^\s<]+/g, '<span class="fakefile">⚠️ فایل واقعی نیست (نشانی محیط فرستنده است)</span>');
 }
 function esc(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function escAttr(s){ return esc(String(s)).replace(/"/g, '&quot;'); }
