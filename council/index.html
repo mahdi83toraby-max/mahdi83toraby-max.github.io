@@ -1132,6 +1132,11 @@ let sttPrevStream = null;
 function sttStopPrev(){ if (sttPrevStream) { try { sttPrevStream.getTracks().forEach(t=>t.stop()); } catch(e){} sttPrevStream = null; } }
 async function sttStart(e){ if (e && e.preventDefault) e.preventDefault(); if (sttRec) return;
   if (!sttKeys()[sttSel()]) { const _ks = sttKeys(); const _f = _ks.findIndex(x => !!x); if (_f >= 0) { try { localStorage.setItem('council_stt_sel', '' + _f); const _sel = document.getElementById('sttsel'); if (_sel) _sel.value = '' + _f; } catch(e) {} } else { showToastGlobal('کلید صوتی روی این دستگاه نیست؛ نسخهٔ تازهٔ برنامه را نصب کنید'); sttBar.style.display='block'; sttState.textContent='هیچ کلید صوتی روی این دستگاه نیست؛ از تنظیمات واردش کنید.'; return; } }
+  if (window.AndroidStt && typeof AndroidStt.startRecording === 'function') {
+    try { AndroidStt.startRecording(); sttRec = {native:true}; micBtn.classList.add('rec'); }
+    catch(err){ showToastGlobal('میکروفون در دسترس نیست'); sttBar.style.display='block'; sttState.textContent='شروع ضبط صدا ممکن نشد.'; }
+    return;
+  }
   let stream = null;
   try {
     sttStopPrev();
@@ -1172,6 +1177,12 @@ async function sttTranscribe(b64){
 }
 async function sttFinish(ok){ if (!sttRec) { recHide(); return; } const r = sttRec; sttRec = null; micBtn.classList.remove('rec');
   if (recTimer) { clearInterval(recTimer); recTimer=null; }
+  if (r.native) {
+    if (!ok) { try { AndroidStt.cancelRecording(); } catch(e){} recHide(); return; }
+    recDoneBtn.disabled = true; recCancelBtn.disabled = true; recTimeEl.textContent = 'در حال تبدیل…';
+    try { AndroidStt.stopRecording(); } catch(e){ showToastGlobal('توقف ضبط ممکن نشد'); recHide(); }
+    return;
+  }
   if (!ok) { try { r.proc.disconnect(); r.src.disconnect(); } catch(e){} r.stream.getTracks().forEach(t=>t.stop()); if (sttPrevStream === r.stream) sttPrevStream = null; try { r.ctx.close(); } catch(e){} recHide(); return; }
   recDoneBtn.disabled = true; recCancelBtn.disabled = true; recTimeEl.textContent = 'در حال تبدیل…';
   try { r.proc.disconnect(); r.src.disconnect(); } catch(e){}
@@ -1187,6 +1198,28 @@ async function sttFinish(ok){ if (!sttRec) { recHide(); return; } const r = sttR
   } catch(err){ showToastGlobal('تبدیل صوت انجام نشد'); sttBar.style.display='block'; sttState.textContent = 'تبدیل صوت انجام نشد: ' + err.message; }
   recHide();
 }
+window.__sttNativeDone = async function(b64){
+  try {
+    const bin = atob(b64); const bytes = new Uint8Array(bin.length);
+    for (let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+    const blob = new Blob([bytes], {type:'audio/wav'});
+    const buf = await blob.arrayBuffer();
+    const data = bufToB64(buf);
+    const text = await sttTranscribe(data);
+    if (text){ draftEl.value = (draftEl.value ? draftEl.value.replace(/\s+$/,'') + ' ' : '') + text; draftEl.focus(); draftEl.dispatchEvent(new Event('input')); }
+  } catch(err){ showToastGlobal('تبدیل صوت انجام نشد'); sttBar.style.display='block'; sttState.textContent = 'تبدیل صوت انجام نشد: ' + err.message; }
+  recHide();
+};
+window.__sttNativeError = function(code){
+  sttRec = null; micBtn.classList.remove('rec');
+  const msgs = { permission:'دسترسی میکروفون داده نشده است؛ از تنظیمات گوشی، برای برنامهٔ اتاق تصمیم‌گیری دسترسی میکروفون را فعال کنید.',
+    busy:'میکروفون الان مشغول است؛ برنامهٔ دیگری که از میکروفون استفاده می‌کند را ببندید و دوباره تلاش کنید.',
+    init:'شروع ضبط صدا روی این گوشی ممکن نشد.',
+    record:'ضبط صدا با خطا متوقف شد؛ دوباره تلاش کنید.' };
+  showToastGlobal('میکروفون در دسترس نیست');
+  sttBar.style.display='block'; sttState.textContent = msgs[code] || ('خطای ضبط صدا: ' + code);
+  recHide();
+};
 function syncSendVis(){ const show = (draftEl.value.trim().length>0) || !!selectedFile; sendBtn.style.display = show ? 'flex' : 'none'; }
 window.syncSendVis = syncSendVis;
 draftEl.addEventListener('input', syncSendVis);
