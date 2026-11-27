@@ -107,6 +107,15 @@
   #dmTabBadge{margin-inline-start:6px}
   .dmnote{color:var(--muted);font-size:12.5px;line-height:2;padding:14px 12px 6px;text-align:center}
   footer .attach{width:46px;height:46px;flex:none;border-radius:50%;background:var(--panel2);border:1px solid #22344a;color:#cfe1f5;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:.15s;box-shadow:none}
+  footer .mic{width:46px;height:46px;flex:none;border-radius:50%;background:var(--panel2);border:1px solid #22344a;color:#cfe1f5;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:.15s;box-shadow:none;touch-action:none;-webkit-touch-callout:none;user-select:none}
+  footer .mic svg{width:22px;height:22px;fill:currentColor}
+  footer .mic.rec{background:#b91c1c;border-color:#ef4444;color:#fff;animation:micpulse 1s infinite}
+  footer .mic.busy{opacity:.55}
+  @keyframes micpulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}100%{box-shadow:0 0 0 12px rgba(239,68,68,0)}}
+  footer .sttchip{flex:none;height:46px;padding:0 10px;border-radius:23px;background:var(--panel2);border:1px solid #22344a;color:#cfe1f5;cursor:pointer;font-size:12.5px}
+  #sttbar{display:none;background:var(--panel);border-bottom:1px solid var(--line);padding:8px 14px;font-size:12.5px;line-height:1.9}
+  #sttbar input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:6px 8px;font-size:12px;direction:ltr;text-align:left;margin-top:5px}
+  #sttbar select{background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:5px 8px;font-size:12.5px}
   footer .attach:hover{border-color:var(--accent);color:#fff}
   footer .attach svg{width:21px;height:21px;fill:currentColor;transform:none}
   .bub .photo{display:block;max-width:340px;width:100%;border-radius:12px;margin:2px 0 6px;cursor:zoom-in;background:#0b141d}
@@ -151,6 +160,7 @@
 </header>
 <div id="ghbar"><span id="ghstatus"></span><span id="ghtokrow" style="display:none"> <input id="ghtok" type="password" placeholder="GitHub emergency token"> <button id="ghtoksave">ذخیرهٔ توکن</button></span></div>
 <div id="tokbar"><div>🔑 توکن اضطراری گیت‌هاب — یک بار وارد کنید تا روی همین دستگاه بماند؛ فقط روزی لازم می‌شود که سوپابیس قطع باشد.</div><div style="display:flex;gap:6px;margin-top:6px"><input id="ghtokN" type="password" placeholder="github_pat_..." style="flex:1;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:6px 8px;font-size:12px;direction:ltr;text-align:left"><button id="ghtoksaveN" type="button">ذخیرهٔ توکن</button></div><div id="tokState" style="margin-top:4px"></div></div>
+<div id="sttbar"><div>🎙️ تبدیل صوت به متن — کلیدهای چهار مدل را یک بار اینجا بگذارید؛ فقط روی همین دستگاه می‌مانند. بعد با نگه‌داشتن دکمهٔ میکروفون حرف بزنید و رها کنید تا صدا به متن تبدیل شود.</div><div style="display:flex;gap:6px;margin-top:6px;align-items:center"><span>مدل فعال:</span><select id="sttsel"><option value="0">مدل ۱</option><option value="1">مدل ۲</option><option value="2">مدل ۳</option><option value="3">مدل ۴</option></select><button id="sttsave" type="button">ذخیرهٔ کلیدها</button></div><input id="sttk0" type="password" placeholder="کلید Model 1"><input id="sttk1" type="password" placeholder="کلید Model 2"><input id="sttk2" type="password" placeholder="کلید Model 3"><input id="sttk3" type="password" placeholder="کلید Model 4"><div id="sttState" style="margin-top:4px"></div></div>
 
 <div id="tabs">
   <button id="tabRoom" class="tab active" type="button">اتاق اصلی</button>
@@ -187,7 +197,7 @@
   <button id="attach" class="attach" type="button" aria-label="ارسال فایل"><svg viewBox="0 0 24 24"><path d="M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z"/></svg></button>
   <input id="fileinput" type="file" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z" hidden>
   <textarea id="draft" placeholder="پیامتان را بنویسید…"></textarea>
-  <button id="send" type="button" aria-label="ارسال"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+  <button id="sttChip" class="sttchip" type="button">مدل ۱ ▾</button><button id="mic" class="mic" type="button" aria-label="پیام صوتی"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15a.995.995 0 0 0-.98-.85C5.49 11 5 11.49 5 12.14c0 3.28 2.39 5.99 5.5 6.61V21c0 .55.45 1 1 1s1-.45 1-1v-2.25c3.11-.62 5.5-3.33 5.5-6.61 0-.65-.49-1.14-1.09-1.14z"/></svg></button><button id="send" type="button" aria-label="ارسال"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -1094,6 +1104,77 @@ setInterval(async () => {
     else if (!ghMode && ++sbFailStreak >= 2) enterGhMode();
   } catch (e) { if (!ghMode && ++sbFailStreak >= 2) enterGhMode(); }
 }, 15000);
+
+// ===== STT: push-to-talk voice-to-text via Gemini (keys stay on this device) =====
+const STT_MODELS = ['gemini-3.5-transcribe','gemini-3.5-flash','gemini-3.6-flash'];
+const sttChip = document.getElementById('sttChip'), micBtn = document.getElementById('mic');
+const sttBar = document.getElementById('sttbar'), sttState = document.getElementById('sttState');
+const FA_DIG = ['۱','۲','۳','۴'];
+function sttKeys(){ try { const a = JSON.parse(localStorage.getItem('council_stt_keys')||'[]'); return Array.isArray(a)?a:[]; } catch(e){ return []; } }
+function sttSel(){ const i = parseInt(localStorage.getItem('council_stt_sel')||'0',10); return (i>=0&&i<4)?i:0; }
+function sttChipLabel(){ sttChip.textContent = 'مدل ' + FA_DIG[sttSel()] + ' ▾'; }
+sttChipLabel();
+{ const ks = sttKeys(); for (let i=0;i<4;i++){ const inp = document.getElementById('sttk'+i); if (ks[i]) inp.value = ks[i]; } }
+document.getElementById('sttsel').value = String(sttSel());
+document.getElementById('sttsel').addEventListener('change', e=>{ localStorage.setItem('council_stt_sel', e.target.value); sttChipLabel(); });
+function saveSttKeys(){ const arr=[0,1,2,3].map(i=>document.getElementById('sttk'+i).value.trim()); localStorage.setItem('council_stt_keys', JSON.stringify(arr)); sttState.textContent = 'کلیدها روی همین دستگاه ذخیره شد.'; }
+document.getElementById('sttsave').addEventListener('click', saveSttKeys);
+sttChip.addEventListener('click', ()=>{ sttBar.style.display = sttBar.style.display==='block' ? 'none' : 'block'; });
+let sttRec = null;
+async function sttStart(e){ e.preventDefault(); if (sttRec) return;
+  if (!sttKeys()[sttSel()]) { sttBar.style.display='block'; sttState.textContent='اول کلید مدل انتخاب‌شده را وارد و ذخیره کنید.'; return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    if (ctx.state === 'suspended') await ctx.resume();
+    const src = ctx.createMediaStreamSource(stream);
+    const proc = ctx.createScriptProcessor(4096,1,1); const chunks=[]; let len=0;
+    proc.onaudioprocess = ev => { const d = ev.inputBuffer.getChannelData(0); chunks.push(new Float32Array(d)); len += d.length; };
+    src.connect(proc); proc.connect(ctx.destination);
+    sttRec = {stream, ctx, proc, src, chunks, len};
+    micBtn.classList.add('rec');
+  } catch(err){ sttBar.style.display='block'; sttState.textContent='دسترسی میکروفون داده نشد.'; }
+}
+function wavEncode(pcm, sr){ const buf = new ArrayBuffer(44 + pcm.length*2); const v = new DataView(buf);
+  const wstr=(o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i, t.charCodeAt(i)); };
+  wstr(0,'RIFF'); v.setUint32(4, 36 + pcm.length*2, true); wstr(8,'WAVEfmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); wstr(36,'data'); v.setUint32(40, pcm.length*2, true);
+  for(let i=0;i<pcm.length;i++) v.setInt16(44+i*2, pcm[i], true); return buf; }
+function bufToB64(buf){ let bin=''; const bytes=new Uint8Array(buf); const CH=0x8000; for(let i=0;i<bytes.length;i+=CH){ bin += String.fromCharCode.apply(null, bytes.subarray(i,i+CH)); } return btoa(bin); }
+async function sttTranscribe(b64){
+  const keys = sttKeys(); const order = []; const s0 = sttSel();
+  for (let k=0;k<4;k++){ const idx=(s0+k)%4; if (keys[idx]) order.push(keys[idx]); }
+  if (!order.length) throw new Error('کلیدی وارد نشده است');
+  let lastErr = 'خطای نامشخص';
+  for (const key of order){ for (const model of STT_MODELS){
+    try {
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+encodeURIComponent(key), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({contents:[{parts:[{text:'این فایل صوتی را دقیقاً به متن تبدیل کن؛ فقط متن گفتار را برگردان، بدون هیچ توضیح اضافه.'},{inline_data:{mime_type:'audio/wav', data:b64}}]}]})});
+      const d = await res.json().catch(()=>({}));
+      if (!res.ok){ lastErr = (d.error && d.error.message) || ('HTTP '+res.status); if (res.status===429 || res.status===400 || res.status===403) break; continue; }
+      const parts = d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts;
+      const t = parts ? parts.map(p=>p.text||'').join('').trim() : '';
+      if (t) return t; lastErr = 'پاسخ خالی از مدل';
+    } catch(e){ lastErr = e.message; }
+  } }
+  throw new Error(lastErr);
+}
+async function sttStop(){ if (!sttRec) return; const r = sttRec; sttRec = null; micBtn.classList.remove('rec');
+  try { r.proc.disconnect(); r.src.disconnect(); } catch(e){}
+  r.stream.getTracks().forEach(t=>t.stop());
+  const sr = r.ctx.sampleRate; try { r.ctx.close(); } catch(e){}
+  if (!r.len) return;
+  const merged = new Float32Array(r.len); let off=0; for (const c of r.chunks){ merged.set(c, off); off += c.length; }
+  const ratio = sr/16000, outLen = Math.floor(merged.length/ratio), pcm = new Int16Array(outLen);
+  for (let i=0;i<outLen;i++){ const v = Math.max(-1, Math.min(1, merged[Math.floor(i*ratio)])); pcm[i] = v<0 ? v*0x8000 : v*0x7FFF; }
+  const b64 = bufToB64(wavEncode(pcm, 16000));
+  micBtn.classList.add('busy');
+  try { const text = await sttTranscribe(b64);
+    if (text){ draftEl.value = (draftEl.value ? draftEl.value.replace(/\s+$/,'') + ' ' : '') + text; draftEl.focus(); draftEl.dispatchEvent(new Event('input')); }
+  } catch(err){ sttBar.style.display='block'; sttState.textContent = 'تبدیل صوت انجام نشد: ' + err.message; }
+  micBtn.classList.remove('busy');
+}
+micBtn.addEventListener('pointerdown', sttStart);
+['pointerup','pointerleave','pointercancel'].forEach(ev=>micBtn.addEventListener(ev, sttStop));
+micBtn.addEventListener('contextmenu', e=>e.preventDefault());
 </script>
 <script>
 if ('serviceWorker' in navigator) {
