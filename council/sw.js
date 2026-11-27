@@ -1,4 +1,4 @@
-const CACHE = 'council-v26';
+const CACHE = 'council-v27';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', (e) => {

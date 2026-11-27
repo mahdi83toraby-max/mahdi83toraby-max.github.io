@@ -1128,10 +1128,16 @@ document.getElementById('sttsel').addEventListener('change', e=>{ localStorage.s
 function saveSttKeys(){ const arr=[0,1,2,3].map(i=>document.getElementById('sttk'+i).value.trim()); localStorage.setItem('council_stt_keys', JSON.stringify(arr)); sttState.textContent = 'کلیدها روی همین دستگاه ذخیره شد.'; }
 document.getElementById('sttsave').addEventListener('click', saveSttKeys);
 let sttRec = null;
+let sttPrevStream = null;
+function sttStopPrev(){ if (sttPrevStream) { try { sttPrevStream.getTracks().forEach(t=>t.stop()); } catch(e){} sttPrevStream = null; } }
 async function sttStart(e){ if (e && e.preventDefault) e.preventDefault(); if (sttRec) return;
   if (!sttKeys()[sttSel()]) { const _ks = sttKeys(); const _f = _ks.findIndex(x => !!x); if (_f >= 0) { try { localStorage.setItem('council_stt_sel', '' + _f); const _sel = document.getElementById('sttsel'); if (_sel) _sel.value = '' + _f; } catch(e) {} } else { showToastGlobal('کلید صوتی روی این دستگاه نیست؛ نسخهٔ تازهٔ برنامه را نصب کنید'); sttBar.style.display='block'; sttState.textContent='هیچ کلید صوتی روی این دستگاه نیست؛ از تنظیمات واردش کنید.'; return; } }
+  let stream = null;
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    sttStopPrev();
+    try { stream = await navigator.mediaDevices.getUserMedia({audio:true}); }
+    catch (e1) { if (e1 && e1.name === 'NotReadableError') { sttStopPrev(); await new Promise(r=>setTimeout(r,400)); stream = await navigator.mediaDevices.getUserMedia({audio:true}); } else throw e1; }
+    sttPrevStream = stream;
     const ctx = new (window.AudioContext||window.webkitAudioContext)();
     if (ctx.state === 'suspended') await ctx.resume();
     const src = ctx.createMediaStreamSource(stream);
@@ -1140,7 +1146,7 @@ async function sttStart(e){ if (e && e.preventDefault) e.preventDefault(); if (s
     src.connect(proc); proc.connect(ctx.destination);
     sttRec = {stream, ctx, proc, src, chunks, len};
     micBtn.classList.add('rec');
-  } catch(err){ showToastGlobal('میکروفون در دسترس نیست: ' + (err && err.name ? err.name : err)); sttBar.style.display='block'; sttState.textContent='دسترسی میکروفون داده نشد: ' + (err && err.message ? err.message : err); }
+  } catch(err){ if (stream) { try { stream.getTracks().forEach(t=>t.stop()); } catch(e){} if (sttPrevStream === stream) sttPrevStream = null; } showToastGlobal('میکروفون در دسترس نیست: ' + (err && err.name ? err.name : err)); sttBar.style.display='block'; sttState.textContent='دسترسی میکروفون داده نشد: ' + (err && err.message ? err.message : err); }
 }
 function wavEncode(pcm, sr){ const buf = new ArrayBuffer(44 + pcm.length*2); const v = new DataView(buf);
   const wstr=(o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i, t.charCodeAt(i)); };
@@ -1166,10 +1172,10 @@ async function sttTranscribe(b64){
 }
 async function sttFinish(ok){ if (!sttRec) { recHide(); return; } const r = sttRec; sttRec = null; micBtn.classList.remove('rec');
   if (recTimer) { clearInterval(recTimer); recTimer=null; }
-  if (!ok) { try { r.proc.disconnect(); r.src.disconnect(); } catch(e){} r.stream.getTracks().forEach(t=>t.stop()); try { r.ctx.close(); } catch(e){} recHide(); return; }
+  if (!ok) { try { r.proc.disconnect(); r.src.disconnect(); } catch(e){} r.stream.getTracks().forEach(t=>t.stop()); if (sttPrevStream === r.stream) sttPrevStream = null; try { r.ctx.close(); } catch(e){} recHide(); return; }
   recDoneBtn.disabled = true; recCancelBtn.disabled = true; recTimeEl.textContent = 'در حال تبدیل…';
   try { r.proc.disconnect(); r.src.disconnect(); } catch(e){}
-  r.stream.getTracks().forEach(t=>t.stop());
+  r.stream.getTracks().forEach(t=>t.stop()); if (sttPrevStream === r.stream) sttPrevStream = null;
   const sr = r.ctx.sampleRate; try { r.ctx.close(); } catch(e){}
   if (!r.len) { recHide(); return; }
   const merged = new Float32Array(r.len); let off=0; for (const c of r.chunks){ merged.set(c, off); off += c.length; }
