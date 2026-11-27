@@ -1129,7 +1129,7 @@ function saveSttKeys(){ const arr=[0,1,2,3].map(i=>document.getElementById('sttk
 document.getElementById('sttsave').addEventListener('click', saveSttKeys);
 let sttRec = null;
 async function sttStart(e){ if (e && e.preventDefault) e.preventDefault(); if (sttRec) return;
-  if (!sttKeys()[sttSel()]) { showToastGlobal('کلید صوتی روی این دستگاه نیست؛ نسخهٔ تازهٔ برنامه را نصب کنید'); sttBar.style.display='block'; sttState.textContent='کلید مدل انتخاب‌شده در این دستگاه نیست؛ از تنظیمات واردش کنید.'; return; }
+  if (!sttKeys()[sttSel()]) { const _ks = sttKeys(); const _f = _ks.findIndex(x => !!x); if (_f >= 0) { try { localStorage.setItem('council_stt_sel', '' + _f); const _sel = document.getElementById('sttsel'); if (_sel) _sel.value = '' + _f; } catch(e) {} } else { showToastGlobal('کلید صوتی روی این دستگاه نیست؛ نسخهٔ تازهٔ برنامه را نصب کنید'); sttBar.style.display='block'; sttState.textContent='هیچ کلید صوتی روی این دستگاه نیست؛ از تنظیمات واردش کنید.'; return; } }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({audio:true});
     const ctx = new (window.AudioContext||window.webkitAudioContext)();
