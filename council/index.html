@@ -82,10 +82,10 @@
   #replybar{display:none;background:var(--panel);border-top:1px solid rgba(255,255,255,.05);border-right:3px solid var(--accent);padding:8px 14px;font-size:12.5px;color:var(--muted);align-items:center;gap:8px}
   #replybar b{color:var(--text)}
   #replybar button{background:none;border:none;color:var(--muted);font-size:15px;padding:2px 8px;cursor:pointer;font-family:inherit}
-  footer{background:var(--panel);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:9px;align-items:flex-end;box-shadow:0 -1px 6px rgba(0,0,0,.3)}
-  footer textarea{flex:1;background:var(--panel2);border:1px solid #22344a;color:var(--text);border-radius:24px;padding:11px 17px;font-family:inherit;font-size:15px;resize:none;max-height:120px;min-height:46px;line-height:1.65;outline:none;transition:.15s}
-  footer textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,140,255,.22)}
-  footer button{width:46px;height:46px;flex:none;border-radius:50%;background:linear-gradient(135deg,#5b97ff,#2f6fe4);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 4px 14px rgba(79,140,255,.4);transition:transform .12s}
+  footer{background:var(--panel2);border:1px solid #22344a;border-radius:30px;margin:10px 12px calc(10px + env(safe-area-inset-bottom));padding:5px 7px;display:flex;gap:4px;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  footer textarea{flex:1;background:transparent;border:none;color:var(--text);border-radius:0;padding:9px 8px;font-family:inherit;font-size:15px;resize:none;max-height:120px;min-height:40px;line-height:1.65;outline:none}
+  footer textarea:focus{box-shadow:none}
+  footer button{width:40px;height:40px;flex:none;border-radius:50%;background:linear-gradient(135deg,#5b97ff,#2f6fe4);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 4px 14px rgba(79,140,255,.4);transition:transform .12s}
   footer button:active{transform:scale(.93)}
   footer button svg{width:21px;height:21px;fill:#fff;transform:scaleX(-1)}
   footer button:disabled{opacity:.5}
@@ -106,16 +106,22 @@
   .ubadge{background:#e5484d;color:#fff;border-radius:999px;min-width:20px;height:20px;line-height:20px;text-align:center;font-size:11.5px;padding:0 6px;flex:none;display:inline-block}
   #dmTabBadge{margin-inline-start:6px}
   .dmnote{color:var(--muted);font-size:12.5px;line-height:2;padding:14px 12px 6px;text-align:center}
-  footer .attach{width:46px;height:46px;flex:none;border-radius:50%;background:var(--panel2);border:1px solid #22344a;color:#cfe1f5;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:.15s;box-shadow:none}
-  footer .mic{width:46px;height:46px;flex:none;border-radius:50%;background:var(--panel2);border:1px solid #22344a;color:#cfe1f5;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:.15s;box-shadow:none;touch-action:none;-webkit-touch-callout:none;user-select:none}
+  footer .attach{width:40px;height:40px;flex:none;border-radius:50%;background:transparent;border:none;color:#cfe1f5;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:none}
+  footer .mic{width:40px;height:40px;flex:none;border-radius:50%;background:transparent;border:none;color:#cfe1f5;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:none}
   footer .mic svg{width:22px;height:22px;fill:currentColor}
   footer .mic.rec{background:#b91c1c;border-color:#ef4444;color:#fff;animation:micpulse 1s infinite}
   footer .mic.busy{opacity:.55}
+  #recbar{display:none;margin:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--panel2);border:1px solid #22344a;border-radius:30px;padding:6px 10px;align-items:center;gap:10px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  #recbar .recdot{width:11px;height:11px;border-radius:50%;background:#ef4444;animation:micpulse 1s infinite;flex:none}
+  #rectime{font-size:14px;color:var(--text);min-width:44px}
+  #reccancel{background:none;border:none;color:var(--muted);font-family:inherit;font-size:13.5px;cursor:pointer;padding:8px 10px}
+  #recdone{background:linear-gradient(135deg,#5b97ff,#2f6fe4);border:none;color:#fff;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;padding:9px 16px;border-radius:999px}
+  #recdone:disabled,#reccancel:disabled{opacity:.5}
   @keyframes micpulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}100%{box-shadow:0 0 0 12px rgba(239,68,68,0)}}
   #setbar{display:none;background:var(--panel);border-bottom:1px solid var(--line);padding:8px 14px;font-size:12.5px;line-height:1.9}
   #setbar input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:6px 8px;font-size:12px;direction:ltr;text-align:left;margin-top:5px}
   #setbar select{background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:5px 8px;font-size:12.5px}
-  footer .attach:hover{border-color:var(--accent);color:#fff}
+  footer .attach:hover{color:#fff}
   footer .attach svg{width:21px;height:21px;fill:currentColor;transform:none}
   .bub .photo{display:block;max-width:340px;width:100%;border-radius:12px;margin:2px 0 6px;cursor:zoom-in;background:#0b141d}
   .bub .photo:only-child{margin-bottom:2px}
@@ -191,8 +197,9 @@
   <button id="pvcancel" type="button" aria-label="لغو عکس">✕</button>
 </div>
 
+<div id="recbar"><span class="recdot"></span><span id="rectime">۰:۰۰</span><span style="flex:1"></span><button id="reccancel" type="button">لغو</button><button id="recdone" type="button">✓ تبدیل به متن</button></div>
 <footer>
-  <button id="attach" class="attach" type="button" aria-label="ارسال فایل"><svg viewBox="0 0 24 24"><path d="M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z"/></svg></button>
+  <button id="attach" class="attach" type="button" aria-label="ارسال فایل"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
   <input id="fileinput" type="file" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z" hidden>
   <textarea id="draft" placeholder="پیامتان را بنویسید…"></textarea>
   <button id="mic" class="mic" type="button" aria-label="پیام صوتی"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15a.995.995 0 0 0-.98-.85C5.49 11 5 11.49 5 12.14c0 3.28 2.39 5.99 5.5 6.61V21c0 .55.45 1 1 1s1-.45 1-1v-2.25c3.11-.62 5.5-3.33 5.5-6.61 0-.65-.49-1.14-1.09-1.14z"/></svg></button><button id="send" type="button" aria-label="ارسال"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
@@ -524,6 +531,7 @@ function showToastGlobal(msg){
 }
 function clearPhoto(){
   selectedFile = null;
+  if (window.syncSendVis) syncSendVis();
   pendingFiles = [];
   selectedKind = null;
   const pvi = document.getElementById('pvimg'); if (pvi) { pvi.style.display = ''; pvi.removeAttribute('src'); }
@@ -544,6 +552,7 @@ function onFilePicked(file){
   if (kind !== 'image' && file.size > MAX_FILE) { showToastGlobal('حجم فایل باید کمتر از ۵۰ مگابایت باشد'); return; }
   clearPhoto();
   selectedFile = file;
+  if (window.syncSendVis) syncSendVis();
   selectedKind = kind;
   const pvimg = document.getElementById('pvimg');
   const pvicon = document.getElementById('pvicon');
@@ -662,6 +671,8 @@ async function send(){
     const r = await fetch(API, { method: 'POST', headers: { ...HEADERS, 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) });
     if (r.ok) {
       draftEl.value = '';
+    if (window.syncSendVis) syncSendVis();
+      if (window.syncSendVis) syncSendVis();
       draftEl.style.height = 'auto';
       const extra = pendingFiles.slice(1);
       for (let i = 0; i < extra.length; i++) {
@@ -941,6 +952,7 @@ async function sendDM(){
     const r = await fetch(API_DM, { method: 'POST', headers: { ...HEADERS, 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) });
     if (r.ok) {
       draftEl.value = ''; draftEl.style.height = 'auto';
+      if (window.syncSendVis) syncSendVis();
       const extra = pendingFiles.slice(1);
       for (let i = 0; i < extra.length; i++) {
         const pv = document.getElementById('pvsize');
@@ -1081,6 +1093,7 @@ if (tokBtnEl) tokBtnEl.addEventListener('click', () => {
   const bar = document.getElementById('setbar');
   const open = bar.style.display === 'block';
   bar.style.display = open ? 'none' : 'block';
+  if (!open) { const _ks = sttKeys(); document.getElementById('sttState').textContent = _ks[sttSel()] ? '✅ کلید مدل انتخابی روی این دستگاه فعال است.' : '❌ کلید مدل انتخابی روی این دستگاه نیست.'; }
   if (!open) document.getElementById('tokState').textContent = ghToken() ? '✅ توکن روی این دستگاه ذخیره شده است؛ برای جایگزینی، توکن تازه را وارد و ذخیره کنید.' : 'هنوز توکنی روی این دستگاه ذخیره نشده است.';
 });
 const ghtoksaveNEl = document.getElementById('ghtoksaveN');
@@ -1116,7 +1129,7 @@ function saveSttKeys(){ const arr=[0,1,2,3].map(i=>document.getElementById('sttk
 document.getElementById('sttsave').addEventListener('click', saveSttKeys);
 let sttRec = null;
 async function sttStart(e){ e.preventDefault(); if (sttRec) return;
-  if (!sttKeys()[sttSel()]) { sttBar.style.display='block'; sttState.textContent='کلید مدل انتخاب‌شده در این دستگاه نیست؛ از تنظیمات واردش کنید.'; return; }
+  if (!sttKeys()[sttSel()]) { showToastGlobal('کلید صوتی روی این دستگاه نیست؛ نسخهٔ تازهٔ برنامه را نصب کنید'); sttBar.style.display='block'; sttState.textContent='کلید مدل انتخاب‌شده در این دستگاه نیست؛ از تنظیمات واردش کنید.'; return; }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({audio:true});
     const ctx = new (window.AudioContext||window.webkitAudioContext)();
@@ -1151,24 +1164,37 @@ async function sttTranscribe(b64){
   } }
   throw new Error(lastErr);
 }
-async function sttStop(){ if (!sttRec) return; const r = sttRec; sttRec = null; micBtn.classList.remove('rec');
+async function sttFinish(ok){ if (!sttRec) { recHide(); return; } const r = sttRec; sttRec = null; micBtn.classList.remove('rec');
+  if (recTimer) { clearInterval(recTimer); recTimer=null; }
+  if (!ok) { try { r.proc.disconnect(); r.src.disconnect(); } catch(e){} r.stream.getTracks().forEach(t=>t.stop()); try { r.ctx.close(); } catch(e){} recHide(); return; }
+  recDoneBtn.disabled = true; recCancelBtn.disabled = true; recTimeEl.textContent = 'در حال تبدیل…';
   try { r.proc.disconnect(); r.src.disconnect(); } catch(e){}
   r.stream.getTracks().forEach(t=>t.stop());
   const sr = r.ctx.sampleRate; try { r.ctx.close(); } catch(e){}
-  if (!r.len) return;
+  if (!r.len) { recHide(); return; }
   const merged = new Float32Array(r.len); let off=0; for (const c of r.chunks){ merged.set(c, off); off += c.length; }
   const ratio = sr/16000, outLen = Math.floor(merged.length/ratio), pcm = new Int16Array(outLen);
   for (let i=0;i<outLen;i++){ const v = Math.max(-1, Math.min(1, merged[Math.floor(i*ratio)])); pcm[i] = v<0 ? v*0x8000 : v*0x7FFF; }
   const b64 = bufToB64(wavEncode(pcm, 16000));
-  micBtn.classList.add('busy');
   try { const text = await sttTranscribe(b64);
     if (text){ draftEl.value = (draftEl.value ? draftEl.value.replace(/\s+$/,'') + ' ' : '') + text; draftEl.focus(); draftEl.dispatchEvent(new Event('input')); }
-  } catch(err){ sttBar.style.display='block'; sttState.textContent = 'تبدیل صوت انجام نشد: ' + err.message; }
-  micBtn.classList.remove('busy');
+  } catch(err){ showToastGlobal('تبدیل صوت انجام نشد'); sttBar.style.display='block'; sttState.textContent = 'تبدیل صوت انجام نشد: ' + err.message; }
+  recHide();
 }
-micBtn.addEventListener('pointerdown', sttStart);
-['pointerup','pointerleave','pointercancel'].forEach(ev=>micBtn.addEventListener(ev, sttStop));
-micBtn.addEventListener('contextmenu', e=>e.preventDefault());
+function syncSendVis(){ const show = (draftEl.value.trim().length>0) || !!selectedFile; sendBtn.style.display = show ? 'flex' : 'none'; }
+window.syncSendVis = syncSendVis;
+draftEl.addEventListener('input', syncSendVis);
+syncSendVis();
+const footerEl = document.querySelector('footer');
+const recBar = document.getElementById('recbar'), recTimeEl = document.getElementById('rectime'), recDoneBtn = document.getElementById('recdone'), recCancelBtn = document.getElementById('reccancel');
+let recTimer = null, recSecs = 0;
+function faNum(t){ return String(t).replace(/\d/g, d=>'۰۱۲۳۴۵۶۷۸۹'[d]); }
+function recShow(){ footerEl.style.display='none'; recBar.style.display='flex'; recSecs=0; recTimeEl.textContent='۰:۰۰'; recDoneBtn.disabled=false; recCancelBtn.disabled=false;
+  recTimer = setInterval(()=>{ recSecs++; recTimeEl.textContent = faNum(Math.floor(recSecs/60)) + ':' + faNum(String(recSecs%60).padStart(2,'0')); if (recSecs>=180) sttFinish(true); }, 1000); }
+function recHide(){ if (recTimer) { clearInterval(recTimer); recTimer=null; } recBar.style.display='none'; footerEl.style.display='flex'; }
+micBtn.addEventListener('click', async ()=>{ await sttStart(); if (sttRec) recShow(); });
+recDoneBtn.addEventListener('click', ()=>sttFinish(true));
+recCancelBtn.addEventListener('click', ()=>sttFinish(false));
 </script>
 <script>
 if ('serviceWorker' in navigator) {
